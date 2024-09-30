@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # MySQL for Appointment Service
+  mysql-appointment:
+    image: mysql:8.0
+    container_name: mysql-appointment
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: appointment_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - appointment-data:/var/lib/mysql
+    networks:
+      - vetoptim-net
+
+  # MySQL for Owner Service
+  mysql-owner:
+    image: mysql:8.0
+    container_name: mysql-owner
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: owner_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - owner-data:/var/lib/mysql
+    networks:
+      - vetoptim-net
+
+  # PostgreSQL for Pet Management Service
+  postgres-pet:
+    image: postgres:13
+    container_name: postgres-pet
+    environment:
+      POSTGRES_DB: pet_management_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - pet-data:/var/lib/postgresql/data
+    networks:
+      - vetoptim-net
+
+  # PostgreSQL for Task & Resource Management Service
+  postgres-task:
+    image: postgres:13
+    container_name: postgres-task
+    environment:
+      POSTGRES_DB: task_management_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    volumes:
+      - task-data:/var/lib/postgresql/data
+    networks:
+      - vetoptim-net
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - vetoptim-net
+
+#  # Appointment Service
+#  appointment-service:
+#    image: vetoptim/appointment-service
+#    container_name: appointment-service
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-appointment:3306/appointment_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_RABBITMQ_HOST: rabbitmq
+#    ports:
+#      - "8081:8080"
+#    depends_on:
+#      - mysql-appointment
+#      - rabbitmq
+#    networks:
+#      - vetoptim-net
+#
+#  # Owner Service
+#  owner-service:
+#    image: vetoptim/owner-service
+#    container_name: owner-service
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-owner:3306/owner_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_RABBITMQ_HOST: rabbitmq
+#    ports:
+#      - "8082:8080"
+#    depends_on:
+#      - mysql-owner
+#      - rabbitmq
+#    networks:
+#      - vetoptim-net
+#
+#  # Pet Management Service
+#  pet-management-service:
+#    image: vetoptim/pet-management-service
+#    container_name: pet-management-service
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pet:5432/pet_management_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_RABBITMQ_HOST: rabbitmq
+#    ports:
+#      - "8083:8080"
+#    depends_on:
+#      - postgres-pet
+#      - rabbitmq
+#    networks:
+#      - vetoptim-net
+#
+#  # Task & Resource Management Service
+#  task-resource-service:
+#    image: vetoptim/task-resource-service
+#    container_name: task-resource-service
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-task:5432/task_management_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_RABBITMQ_HOST: rabbitmq
+#    ports:
+#      - "8084:8080"
+#    depends_on:
+#      - postgres-task
+#      - rabbitmq
+#    networks:
+#      - vetoptim-net
+
+networks:
+  vetoptim-net:
+    driver: bridge
+
+volumes:
+  appointment-data:
+  owner-data:
+  pet-data:
+  task-data:
