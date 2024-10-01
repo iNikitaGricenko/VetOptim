@@ -75,15 +75,15 @@ jobs:
 
       - name: Wait for services to be healthy
         run: |
-          docker-compose -f docker-compose.ci.yml exec mysql mysqladmin --silent --wait=30 ping || exit 1
-          docker-compose -f docker-compose.ci.yml exec postgres pg_isready || exit 1
-          docker-compose -f docker-compose.ci.yml exec rabbitmq rabbitmqctl status || exit 1
+          docker compose -f docker-compose.ci.yml exec mysql mysqladmin --silent --wait=30 ping || exit 1
+          docker compose -f docker-compose.ci.yml exec postgres pg_isready || exit 1
+          docker compose -f docker-compose.ci.yml exec rabbitmq rabbitmqctl status || exit 1
 
       - name: Run Integration Tests
         run: mvn verify --file pom.xml
 
       - name: Stop and remove services
-        run: docker-compose -f docker-compose.ci.yml down
+        run: docker compose -f docker-compose.ci.yml down
 
   docker-build-and-push:
     runs-on: ubuntu-latest
