@@ -4,28 +4,26 @@ import com.wolfhack.vetoptim.common.dto.OwnerDTO;
 import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
 import com.wolfhack.vetoptim.common.event.owner.OwnerDeletedEvent;
 import com.wolfhack.vetoptim.common.event.owner.OwnerUpdatedEvent;
+import com.wolfhack.vetoptim.owner.client.AppointmentClient;
 import com.wolfhack.vetoptim.owner.event.OwnerEventPublisher;
 import com.wolfhack.vetoptim.owner.mapper.OwnerMapper;
 import com.wolfhack.vetoptim.owner.model.Owner;
 import com.wolfhack.vetoptim.owner.repository.OwnerRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
 @ExtendWith(MockitoExtension.class)
-public class OwnerServiceTest {
+class OwnerServiceTest {
 
 	@Mock
 	private OwnerRepository ownerRepository;
@@ -34,62 +32,77 @@ public class OwnerServiceTest {
 	private OwnerMapper ownerMapper;
 
 	@Mock
+	private AppointmentClient appointmentClient;
+
+	@Mock
 	private OwnerEventPublisher ownerEventPublisher;
 
 	@InjectMocks
 	private OwnerService ownerService;
 
-	@Test
-	public void shouldGetAllOwners() {
-		List<Owner> owners = List.of(new Owner(1L, "John Doe", "john@example.com", true, false, List.of(), List.of()));
-		List<OwnerDTO> ownerDTOs = List.of(new OwnerDTO(1L, "John Doe", "john@example.com", true, false, List.of(), List.of()));
+	private Owner owner;
+	private OwnerDTO ownerDTO;
 
-		when(ownerRepository.findAll()).thenReturn(owners);
-		when(ownerMapper.toDTO(any(Owner.class))).thenReturn(ownerDTOs.get(0));
+	@BeforeEach
+	void setUp() {
+		owner = new Owner();
+		owner.setId(1L);
+		owner.setName("John Doe");
 
-		List<OwnerDTO> result = ownerService.getAllOwners();
-
-		assertEquals(1, result.size());
-		assertEquals(ownerDTOs.get(0).getName(), result.get(0).getName());
-		verify(ownerRepository).findAll();
+		ownerDTO = new OwnerDTO();
+		ownerDTO.setId(1L);
+		ownerDTO.setName("John Doe");
 	}
 
 	@Test
-	public void shouldCreateOwner() {
-		OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
-		Owner owner = new Owner(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
+	void testGetOwnerById_Success() {
+		when(ownerRepository.findById(1L)).thenReturn(Optional.of(owner));
+		when(ownerMapper.toDTO(owner)).thenReturn(ownerDTO);
 
-		when(ownerMapper.toModel(any(OwnerDTO.class))).thenReturn(owner);
-		when(ownerRepository.save(any(Owner.class))).thenReturn(owner);
-		when(ownerMapper.toDTO(any(Owner.class))).thenReturn(ownerDTO);
+		Optional<OwnerDTO> result = ownerService.getOwnerById(1L);
+
+		assertEquals(Optional.of(ownerDTO), result);
+		verify(ownerRepository).findById(1L);
+		verify(ownerMapper).toDTO(owner);
+	}
+
+	@Test
+	void testCreateOwner_Success() {
+		when(ownerMapper.toModel(ownerDTO)).thenReturn(owner);
+		when(ownerRepository.save(owner)).thenReturn(owner);
+		when(ownerMapper.toDTO(owner)).thenReturn(ownerDTO);
 
 		OwnerDTO result = ownerService.createOwner(ownerDTO);
 
-		assertEquals("John Doe", result.getName());
+		assertEquals(ownerDTO, result);
+		verify(ownerRepository).save(owner);
 		verify(ownerEventPublisher).publishOwnerCreatedEvent(any(OwnerCreatedEvent.class));
-		verify(ownerRepository).save(any(Owner.class));
 	}
 
 	@Test
-	public void shouldUpdateOwner() {
-		OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
-		Owner existingOwner = new Owner(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
-
-		when(ownerRepository.findById(anyLong())).thenReturn(Optional.of(existingOwner));
+	void testUpdateOwner_Success() {
+		when(ownerRepository.findById(1L)).thenReturn(Optional.of(owner));
+		when(ownerRepository.save(any(Owner.class))).thenReturn(owner);
 		when(ownerMapper.toDTO(any(Owner.class))).thenReturn(ownerDTO);
-		when(ownerRepository.save(any(Owner.class))).thenReturn(existingOwner);
 
-		OwnerDTO result = ownerService.updateOwner(1L, ownerDTO);
+		OwnerDTO updatedOwnerDTO = ownerService.updateOwner(1L, ownerDTO);
 
-		assertEquals("John Doe", result.getName());
+		assertEquals(ownerDTO, updatedOwnerDTO);
+		verify(ownerRepository).findById(1L);
+		verify(ownerRepository).save(any(Owner.class));
 		verify(ownerEventPublisher).publishOwnerUpdatedEvent(any(OwnerUpdatedEvent.class));
 	}
 
 	@Test
-	public void shouldDeleteOwner() {
-		Owner owner = new Owner(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
+	void testUpdateOwner_NotFound() {
+		when(ownerRepository.findById(1L)).thenReturn(Optional.empty());
 
-		when(ownerRepository.findById(anyLong())).thenReturn(Optional.of(owner));
+		assertThrows(RuntimeException.class, () -> ownerService.updateOwner(1L, ownerDTO));
+	}
+
+	@Test
+	void testDeleteOwner_Success() {
+		when(ownerRepository.findById(1L)).thenReturn(Optional.of(owner));
 
 		ownerService.deleteOwner(1L);
 
@@ -98,15 +111,13 @@ public class OwnerServiceTest {
 	}
 
 	@Test
-	void shouldAddPetToOwner() {
-		Owner owner = new Owner(1L, "John Doe", "john@example.com", true, false, List.of(), List.of());
-		Long petId = 100L;
-
+	void testAddPetToOwner_Success() {
 		when(ownerRepository.findById(1L)).thenReturn(Optional.of(owner));
 
-		ownerService.addPetToOwner(1L, petId);
+		ownerService.addPetToOwner(1L, 100L);
 
-		assertTrue(owner.getPetIds().contains(petId));
-		verify(ownerRepository, times(1)).save(owner);
+		assertEquals(1, owner.getPetIds().size());
+		assertEquals(100L, owner.getPetIds().get(0));
+		verify(ownerRepository).save(owner);
 	}
 }

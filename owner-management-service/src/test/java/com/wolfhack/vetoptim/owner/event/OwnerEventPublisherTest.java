@@ -15,9 +15,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
+import com.wolfhack.vetoptim.common.event.owner.OwnerDeletedEvent;
+import com.wolfhack.vetoptim.common.event.owner.OwnerUpdatedEvent;
+import com.wolfhack.vetoptim.owner.event.OwnerEventPublisher;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-public class OwnerEventPublisherTest {
+class OwnerEventPublisherTest {
 
     @Mock
     private RabbitTemplate rabbitTemplate;
@@ -25,39 +38,38 @@ public class OwnerEventPublisherTest {
     @InjectMocks
     private OwnerEventPublisher ownerEventPublisher;
 
-    @Value("${rabbitmq.exchange.owner}")
-    private String ownerExchange;
-
-    @Value("${rabbitmq.routingKey.owner.created}")
-    private String ownerCreatedRoutingKey;
-
-    @Value("${rabbitmq.routingKey.owner.updated}")
-    private String ownerUpdatedRoutingKey;
-
-    @Value("${rabbitmq.routingKey.owner.deleted}")
-    private String ownerDeletedRoutingKey;
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(ownerEventPublisher, "ownerExchange", "owner-exchange");
+        ReflectionTestUtils.setField(ownerEventPublisher, "ownerCreatedRoutingKey", "owner.created");
+        ReflectionTestUtils.setField(ownerEventPublisher, "ownerUpdatedRoutingKey", "owner.updated");
+        ReflectionTestUtils.setField(ownerEventPublisher, "ownerDeletedRoutingKey", "owner.deleted");
+    }
 
     @Test
-    public void shouldPublishOwnerCreatedEvent() {
-        OwnerCreatedEvent event = new OwnerCreatedEvent(1L, "John Doe", "john@example.com");
+    void testPublishOwnerCreatedEvent() {
+        OwnerCreatedEvent event = new OwnerCreatedEvent(1L, "John Doe", "Contact");
+
         ownerEventPublisher.publishOwnerCreatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(ownerExchange, ownerCreatedRoutingKey, event);
+        verify(rabbitTemplate).convertAndSend("owner-exchange", "owner.created", event);
     }
 
     @Test
-    public void shouldPublishOwnerUpdatedEvent() {
-        OwnerUpdatedEvent event = new OwnerUpdatedEvent(1L, "John Doe", "john@example.com");
+    void testPublishOwnerUpdatedEvent() {
+        OwnerUpdatedEvent event = new OwnerUpdatedEvent(1L, "John Doe", "Contact");
+
         ownerEventPublisher.publishOwnerUpdatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(ownerExchange, ownerUpdatedRoutingKey, event);
+        verify(rabbitTemplate).convertAndSend("owner-exchange", "owner.updated", event);
     }
 
     @Test
-    public void shouldPublishOwnerDeletedEvent() {
+    void testPublishOwnerDeletedEvent() {
         OwnerDeletedEvent event = new OwnerDeletedEvent(1L);
+
         ownerEventPublisher.publishOwnerDeletedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(ownerExchange, ownerDeletedRoutingKey, event);
+        verify(rabbitTemplate).convertAndSend("owner-exchange", "owner.deleted", event);
     }
 }

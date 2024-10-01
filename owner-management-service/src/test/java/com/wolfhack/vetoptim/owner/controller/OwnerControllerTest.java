@@ -3,7 +3,9 @@ package com.wolfhack.vetoptim.owner.controller;
 import com.wolfhack.vetoptim.common.dto.OwnerDTO;
 import com.wolfhack.vetoptim.owner.service.OwnerService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.graalvm.nativeimage.RuntimeOptions.get;
 import static org.hamcrest.Matchers.is;
@@ -20,80 +23,121 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(OwnerController.class)
-public class OwnerControllerTest {
+import com.wolfhack.vetoptim.common.dto.OwnerDTO;
+import com.wolfhack.vetoptim.owner.service.OwnerService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-    @Autowired
-    private MockMvc mockMvc;
+import java.util.List;
+import java.util.Optional;
 
-    @MockBean
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.wolfhack.vetoptim.common.dto.OwnerDTO;
+import com.wolfhack.vetoptim.owner.service.OwnerService;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
+
+@ExtendWith(MockitoExtension.class)
+class OwnerControllerTest {
+
+    @Mock
     private OwnerService ownerService;
 
+    @InjectMocks
+    private OwnerController ownerController;
+
     @Test
-    public void shouldGetAllOwners() throws Exception {
-        OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false);
+    void getAllOwners_Success() {
+        OwnerDTO ownerDTO = new OwnerDTO();
+        List<OwnerDTO> owners = List.of(ownerDTO);
+        when(ownerService.getAllOwners()).thenReturn(owners);
 
-        Mockito.when(ownerService.getAllOwners()).thenReturn(Collections.singletonList(ownerDTO));
+        ResponseEntity<List<OwnerDTO>> response = ownerController.getAllOwners();
 
-        mockMvc.perform(get("/owners"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].name", is(ownerDTO.getName())))
-            .andExpect(jsonPath("$[0].contactDetails", is(ownerDTO.getContactDetails())));
+        assertEquals(OK, response.getStatusCode());
+        assertEquals(owners, response.getBody());
+        verify(ownerService).getAllOwners();
     }
 
     @Test
-    public void shouldGetOwnerById() throws Exception {
-        OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false);
+    void getOwnerById_Success() {
+        Long ownerId = 1L;
+        OwnerDTO ownerDTO = new OwnerDTO();
+        when(ownerService.getOwnerById(ownerId)).thenReturn(Optional.of(ownerDTO));
 
-        Mockito.when(ownerService.getOwnerById(anyLong())).thenReturn(java.util.Optional.of(ownerDTO));
+        ResponseEntity<OwnerDTO> response = ownerController.getOwnerById(ownerId);
 
-        mockMvc.perform(get("/owners/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name", is(ownerDTO.getName())))
-            .andExpect(jsonPath("$.contactDetails", is(ownerDTO.getContactDetails())));
+        assertEquals(OK, response.getStatusCode());
+        assertEquals(ownerDTO, response.getBody());
+        verify(ownerService).getOwnerById(ownerId);
     }
 
     @Test
-    public void shouldReturnNotFoundForInvalidOwnerId() throws Exception {
-        Mockito.when(ownerService.getOwnerById(anyLong())).thenReturn(java.util.Optional.empty());
+    void getOwnerById_NotFound() {
+        Long ownerId = 1L;
+        when(ownerService.getOwnerById(ownerId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/owners/99"))
-            .andExpect(status().isNotFound());
+        ResponseEntity<OwnerDTO> response = ownerController.getOwnerById(ownerId);
+
+        assertEquals(ResponseEntity.of(Optional.empty()), response);
+        verify(ownerService).getOwnerById(ownerId);
     }
 
     @Test
-    public void shouldCreateOwner() throws Exception {
-        OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false);
+    void createOwner_Success() {
+        OwnerDTO ownerDTO = new OwnerDTO();
+        when(ownerService.createOwner(ownerDTO)).thenReturn(ownerDTO);
 
-        Mockito.when(ownerService.createOwner(any(OwnerDTO.class))).thenReturn(ownerDTO);
+        ResponseEntity<OwnerDTO> response = ownerController.createOwner(ownerDTO);
 
-        mockMvc.perform(post("/owners")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"John Doe\", \"contactDetails\": \"john@example.com\", \"notifyByEmail\": true, \"notifyBySms\": false}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name", is(ownerDTO.getName())))
-            .andExpect(jsonPath("$.contactDetails", is(ownerDTO.getContactDetails())));
+        assertEquals(OK, response.getStatusCode());
+        assertEquals(ownerDTO, response.getBody());
+        verify(ownerService).createOwner(ownerDTO);
     }
 
     @Test
-    public void shouldUpdateOwner() throws Exception {
-        OwnerDTO ownerDTO = new OwnerDTO(1L, "John Doe", "john@example.com", true, false);
+    void updateOwner_Success() {
+        Long ownerId = 1L;
+        OwnerDTO ownerDTO = new OwnerDTO();
+        when(ownerService.updateOwner(ownerId, ownerDTO)).thenReturn(ownerDTO);
 
-        Mockito.when(ownerService.updateOwner(anyLong(), any(OwnerDTO.class))).thenReturn(ownerDTO);
+        ResponseEntity<OwnerDTO> response = ownerController.updateOwner(ownerId, ownerDTO);
 
-        mockMvc.perform(put("/owners/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"John Doe\", \"contactDetails\": \"john@example.com\", \"notifyByEmail\": true, \"notifyBySms\": false}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name", is(ownerDTO.getName())))
-            .andExpect(jsonPath("$.contactDetails", is(ownerDTO.getContactDetails())));
+        assertEquals(OK, response.getStatusCode());
+        assertEquals(ownerDTO, response.getBody());
+        verify(ownerService).updateOwner(ownerId, ownerDTO);
     }
 
     @Test
-    public void shouldDeleteOwner() throws Exception {
-        mockMvc.perform(delete("/owners/1"))
-            .andExpect(status().isNoContent());
+    void deleteOwner_Success() {
+        Long ownerId = 1L;
+        doNothing().when(ownerService).deleteOwner(ownerId);
 
-        Mockito.verify(ownerService).deleteOwner(anyLong());
+        ResponseEntity<Void> response = ownerController.deleteOwner(ownerId);
+
+        assertEquals(NO_CONTENT, response.getStatusCode());
+        verify(ownerService).deleteOwner(ownerId);
     }
 }
