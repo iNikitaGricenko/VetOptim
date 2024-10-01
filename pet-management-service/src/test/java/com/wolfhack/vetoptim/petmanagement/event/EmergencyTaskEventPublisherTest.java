@@ -4,15 +4,20 @@ import com.wolfhack.vetoptim.common.event.task.EmergencyTaskCreationEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class EmergencyTaskEventPublisherTest {
 
     @Mock
@@ -21,24 +26,18 @@ class EmergencyTaskEventPublisherTest {
     @InjectMocks
     private EmergencyTaskEventPublisher emergencyTaskEventPublisher;
 
-	private AutoCloseable autoCloseable;
-
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        ReflectionTestUtils.setField(emergencyTaskEventPublisher, "taskExchange", "task-exchange");
+        ReflectionTestUtils.setField(emergencyTaskEventPublisher, "emergencyTaskRoutingKey", "task.emergency");
     }
 
     @Test
     void testPublishEmergencyTaskCreationEvent() {
-        EmergencyTaskCreationEvent event = new EmergencyTaskCreationEvent(1L, "PetName", "Critical", "Emergency procedure");
+        EmergencyTaskCreationEvent event = new EmergencyTaskCreationEvent(1L, "Buddy", "Emergency condition", "Emergency surgery required");
 
         emergencyTaskEventPublisher.publishEmergencyTaskCreationEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), eq(event));
+        verify(rabbitTemplate).convertAndSend("task-exchange", "task.emergency", event);
     }
 }

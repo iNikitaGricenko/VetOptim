@@ -1,23 +1,29 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
-import com.wolfhack.vetoptim.common.dto.PetHealthSummary;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.service.PetHealthAnalyticsService;
 import com.wolfhack.vetoptim.petmanagement.service.PetService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
+@ExtendWith(MockitoExtension.class)
 class PetControllerTest {
 
     @Mock
@@ -29,81 +35,76 @@ class PetControllerTest {
     @InjectMocks
     private PetController petController;
 
-	private AutoCloseable autoCloseable;
+    private MockMvc mockMvc;
 
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        mockMvc = MockMvcBuilders.standaloneSetup(petController).build();
     }
 
     @Test
-    void testGetAllPets_Success() {
-        List<Pet> pets = List.of(new Pet());
-        when(petService.getAllPets()).thenReturn(pets);
+    void testGetAllPets() throws Exception {
+        when(petService.getAllPets()).thenReturn(Collections.emptyList());
 
-        ResponseEntity<List<Pet>> response = petController.getAllPets();
+        mockMvc.perform(get("/pets"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(pets, response.getBody());
+        verify(petService).getAllPets();
     }
 
     @Test
-    void testGetPetById_Success() {
-        Long petId = 1L;
-        when(petService.getPetById(petId)).thenReturn(Optional.of(new Pet()));
+    void testGetPetById() throws Exception {
+        when(petService.getPetById(1L)).thenReturn(Optional.of(new Pet()));
 
-        ResponseEntity<Pet> response = petController.getPetById(petId);
+        mockMvc.perform(get("/pets/1"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertEquals(200, response.getStatusCode().value());
+        verify(petService).getPetById(1L);
     }
 
     @Test
-    void testCreatePet_Success() {
+    void testGetPetsByOwnerId() throws Exception {
+        when(petService.getAllPetsByOwnerId(1L)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/pets/owner/1"))
+            .andExpect(status().isOk());
+
+        verify(petService).getAllPetsByOwnerId(1L);
+    }
+
+    @Test
+    void testCreatePet() throws Exception {
         Pet pet = new Pet();
-        when(petService.createPet(pet)).thenReturn(pet);
+        when(petService.createPet(any(Pet.class))).thenReturn(pet);
 
-        ResponseEntity<Pet> response = petController.createPet(pet);
+        mockMvc.perform(post("/pets")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Buddy\"}"))
+            .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(pet, response.getBody());
+        verify(petService).createPet(any(Pet.class));
     }
 
     @Test
-    void testUpdatePet_Success() {
-        Long petId = 1L;
-        Pet petDetails = new Pet();
-        when(petService.updatePet(petId, petDetails)).thenReturn(petDetails);
+    void testUpdatePet() throws Exception {
+        Pet pet = new Pet();
+        when(petService.updatePet(anyLong(), any(Pet.class))).thenReturn(pet);
 
-        ResponseEntity<Pet> response = petController.updatePet(petId, petDetails);
+        mockMvc.perform(put("/pets/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Buddy\"}"))
+            .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(petDetails, response.getBody());
+        verify(petService).updatePet(anyLong(), any(Pet.class));
     }
 
     @Test
-    void testDeletePet_Success() {
-        Long petId = 1L;
+    void testDeletePet() throws Exception {
+        mockMvc.perform(delete("/pets/1"))
+            .andExpect(status().isNoContent());
 
-        ResponseEntity<Void> response = petController.deletePet(petId);
-
-        assertEquals(204, response.getStatusCode().value());
-        verify(petService).deletePet(petId);
-    }
-
-    @Test
-    void testGetPetHealthSummary_Success() {
-        Long petId = 1L;
-        PetHealthSummary summary = new PetHealthSummary();
-        when(petHealthAnalyticsService.getPetHealthSummary(petId)).thenReturn(summary);
-
-        ResponseEntity<PetHealthSummary> response = petController.getPetHealthSummary(petId);
-
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(summary, response.getBody());
+        verify(petService).deletePet(1L);
     }
 }

@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,15 +19,17 @@ public class PetHealthAnalyticsService {
 
     public PetHealthSummary getPetHealthSummary(Long petId) {
         log.info("Fetching health summary for Pet ID: {}", petId);
-        List<MedicalRecord> medicalRecords = medicalRecordRepository.findAllByPetId(petId);
+        List<MedicalRecord> medicalRecords = new ArrayList<>(medicalRecordRepository.findAllByPetId(petId));
 
         if (medicalRecords.isEmpty()) {
             log.info("No health records available for Pet ID: {}", petId);
             return new PetHealthSummary("No health records available.");
         }
 
+        medicalRecords.sort(Comparator.comparing(MedicalRecord::getDateOfTreatment).reversed());
+
         int numberOfVisits = medicalRecords.size();
-        String latestCondition = medicalRecords.getLast().getDiagnosis();
+        String latestCondition = medicalRecords.getFirst().getDiagnosis();
         Map<String, Long> conditionFrequency = medicalRecords.stream()
             .collect(Collectors.groupingBy(MedicalRecord::getDiagnosis, Collectors.counting()));
 
@@ -38,6 +39,7 @@ public class PetHealthAnalyticsService {
 
     private String calculateHealthTrend(Map<String, Long> conditionFrequency) {
         return conditionFrequency.entrySet().stream()
+            .filter(entry -> entry.getValue() > 1)
             .max(Map.Entry.comparingByValue())
             .map(Map.Entry::getKey)
             .orElse("No recurring conditions");

@@ -18,7 +18,7 @@ public class AppointmentEventListener {
     private final MedicalRecordService medicalRecordService;
 
     @Async
-    @RabbitListener(queues = "${rabbitmq.queue.appointment}")
+    @RabbitListener(queues = "${rabbitmq.queue.appointment.created}")
     public void onAppointmentCreated(AppointmentDTO appointmentDTO) {
         log.info("Processing appointment created event for Pet ID: {}", appointmentDTO.getPetId());
         petService.handleAppointmentCreated(appointmentDTO);
@@ -36,7 +36,7 @@ public class AppointmentEventListener {
     }
 
     @Async
-    @RabbitListener(queues = "${rabbitmq.queue.appointment-update}")
+    @RabbitListener(queues = "${rabbitmq.queue.appointment.updated}")
     public void onAppointmentUpdated(AppointmentDTO appointmentDTO) {
         log.info("Processing appointment update event for Pet ID: {}", appointmentDTO.getPetId());
         petService.handleAppointmentUpdated(appointmentDTO);

@@ -3,86 +3,81 @@ package com.wolfhack.vetoptim.petmanagement.listener;
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
 import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
 import com.wolfhack.vetoptim.petmanagement.service.PetService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class AppointmentEventListenerTest {
 
-	@Mock
-	private PetService petService;
+    @Mock
+    private PetService petService;
 
-	@Mock
-	private MedicalRecordService medicalRecordService;
+    @Mock
+    private MedicalRecordService medicalRecordService;
 
-	@InjectMocks
-	private AppointmentEventListener appointmentEventListener;
+    @InjectMocks
+    private AppointmentEventListener appointmentEventListener;
 
-	private AutoCloseable autoCloseable;
+    @Test
+    void onAppointmentCreated_withDiagnosisAndTreatment_createsMedicalRecord() {
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        appointmentDTO.setPetId(1L);
+        appointmentDTO.setDiagnosis("Cold");
+        appointmentDTO.setTreatment("Medication");
 
-	@BeforeEach
-	void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
+        appointmentEventListener.onAppointmentCreated(appointmentDTO);
 
-	@AfterEach
-	void tearDown() throws Exception {
-		autoCloseable.close();
-	}
+        verify(petService).handleAppointmentCreated(any(AppointmentDTO.class));
+        verify(medicalRecordService).createMedicalRecordFromAppointment(
+            eq(1L), eq("Cold"), eq("Medication"));
+    }
 
-	@Test
-	void testOnAppointmentCreated_WithDiagnosisAndTreatment() {
-		AppointmentDTO appointmentDTO = new AppointmentDTO();
-		appointmentDTO.setPetId(1L);
-		appointmentDTO.setDiagnosis("Checkup");
-		appointmentDTO.setTreatment("Treatment");
+    @Test
+    void onAppointmentCreated_withoutDiagnosisOrTreatment_skipsMedicalRecordCreation() {
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        appointmentDTO.setPetId(1L);
+        appointmentDTO.setDiagnosis(null);
+        appointmentDTO.setTreatment(null);
 
-		appointmentEventListener.onAppointmentCreated(appointmentDTO);
+        appointmentEventListener.onAppointmentCreated(appointmentDTO);
 
-		verify(petService).handleAppointmentCreated(appointmentDTO);
-		verify(medicalRecordService).createMedicalRecordFromAppointment(appointmentDTO.getPetId(), appointmentDTO.getDiagnosis(), appointmentDTO.getTreatment());
-	}
+        verify(petService).handleAppointmentCreated(any(AppointmentDTO.class));
+        verify(medicalRecordService, never()).createMedicalRecordFromAppointment(anyLong(), any(), any());
+    }
 
-	@Test
-	void testOnAppointmentCreated_WithoutDiagnosisAndTreatment() {
-		AppointmentDTO appointmentDTO = new AppointmentDTO();
-		appointmentDTO.setPetId(1L);
+    @Test
+    void onAppointmentUpdated_withDiagnosisAndTreatment_updatesMedicalRecord() {
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        appointmentDTO.setPetId(1L);
+        appointmentDTO.setDiagnosis("Fever");
+        appointmentDTO.setTreatment("Antibiotics");
 
-		appointmentEventListener.onAppointmentCreated(appointmentDTO);
+        appointmentEventListener.onAppointmentUpdated(appointmentDTO);
 
-		verify(petService).handleAppointmentCreated(appointmentDTO);
-		verify(medicalRecordService, never()).createMedicalRecordFromAppointment(anyLong(), anyString(), anyString());
-	}
+        verify(petService).handleAppointmentUpdated(any(AppointmentDTO.class));
+        verify(medicalRecordService).createMedicalRecordFromAppointment(
+            eq(1L), eq("Fever"), eq("Antibiotics"));
+    }
 
-	@Test
-	void testOnAppointmentUpdated_WithDiagnosisAndTreatment() {
-		AppointmentDTO appointmentDTO = new AppointmentDTO();
-		appointmentDTO.setPetId(1L);
-		appointmentDTO.setDiagnosis("Checkup");
-		appointmentDTO.setTreatment("Treatment");
+    @Test
+    void onAppointmentUpdated_withoutDiagnosisOrTreatment_skipsMedicalRecordUpdate() {
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        appointmentDTO.setPetId(1L);
+        appointmentDTO.setDiagnosis(null);
+        appointmentDTO.setTreatment(null);
 
-		appointmentEventListener.onAppointmentUpdated(appointmentDTO);
+        appointmentEventListener.onAppointmentUpdated(appointmentDTO);
 
-		verify(petService).handleAppointmentUpdated(appointmentDTO);
-		verify(medicalRecordService).createMedicalRecordFromAppointment(appointmentDTO.getPetId(), appointmentDTO.getDiagnosis(), appointmentDTO.getTreatment());
-	}
-
-	@Test
-	void testOnAppointmentUpdated_WithoutDiagnosisAndTreatment() {
-		AppointmentDTO appointmentDTO = new AppointmentDTO();
-		appointmentDTO.setPetId(1L);
-
-		appointmentEventListener.onAppointmentUpdated(appointmentDTO);
-
-		verify(petService).handleAppointmentUpdated(appointmentDTO);
-		verify(medicalRecordService, never()).createMedicalRecordFromAppointment(anyLong(), anyString(), anyString());
-	}
+        verify(petService).handleAppointmentUpdated(any(AppointmentDTO.class));
+        verify(medicalRecordService, never()).createMedicalRecordFromAppointment(anyLong(), any(), any());
+    }
 }

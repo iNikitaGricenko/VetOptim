@@ -16,25 +16,25 @@ public class MedicalRecordController {
 	private final MedicalRecordService medicalRecordService;
 
 	@GetMapping
-	public ResponseEntity<List<MedicalRecord>> getMedicalHistory(@PathVariable Long petId) {
+	public ResponseEntity<List<MedicalRecord>> getMedicalHistory(@PathVariable("petId") Long petId) {
 		List<MedicalRecord> records = medicalRecordService.getMedicalHistoryForPet(petId);
 		return ResponseEntity.ok(records);
 	}
 
 	@PostMapping
-	public ResponseEntity<MedicalRecord> createMedicalRecord(@PathVariable Long petId, @RequestBody MedicalRecord medicalRecord) {
+	public ResponseEntity<MedicalRecord> createMedicalRecord(@PathVariable("petId") Long petId, @RequestBody MedicalRecord medicalRecord) {
 		MedicalRecord createdRecord = medicalRecordService.createMedicalRecord(petId, medicalRecord);
 		return ResponseEntity.ok(createdRecord);
 	}
 
 	@PutMapping("/{recordId}")
-	public ResponseEntity<MedicalRecord> updateMedicalRecord(@PathVariable Long recordId, @RequestBody MedicalRecord medicalRecord) {
+	public ResponseEntity<MedicalRecord> updateMedicalRecord(@PathVariable("petId") String petId, @PathVariable("recordId") Long recordId, @RequestBody MedicalRecord medicalRecord) {
 		MedicalRecord updatedRecord = medicalRecordService.updateMedicalRecord(recordId, medicalRecord);
 		return ResponseEntity.ok(updatedRecord);
 	}
 
 	@DeleteMapping("/{recordId}")
-	public ResponseEntity<Void> deleteMedicalRecord(@PathVariable Long recordId) {
+	public ResponseEntity<Void> deleteMedicalRecord(@PathVariable("petId") String petId, @PathVariable("recordId") Long recordId) {
 		medicalRecordService.deleteMedicalRecord(recordId);
 		return ResponseEntity.noContent().build();
 	}

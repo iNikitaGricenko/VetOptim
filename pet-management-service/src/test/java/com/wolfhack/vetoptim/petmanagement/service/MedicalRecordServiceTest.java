@@ -1,24 +1,27 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
-import com.wolfhack.vetoptim.common.event.task.EmergencyTaskCreationEvent;
-import com.wolfhack.vetoptim.common.event.task.FollowUpTaskCreationEvent;
 import com.wolfhack.vetoptim.petmanagement.event.EmergencyTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.event.FollowUpTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.MedicalTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.model.MedicalRecord;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.repository.MedicalRecordRepository;
 import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class MedicalRecordServiceTest {
 
     @Mock
@@ -26,6 +29,9 @@ class MedicalRecordServiceTest {
 
     @Mock
     private PetRepository petRepository;
+
+    @Mock
+    private MedicalTaskEventPublisher medicalTaskEventPublisher;
 
     @Mock
     private EmergencyTaskEventPublisher emergencyTaskEventPublisher;
@@ -36,92 +42,149 @@ class MedicalRecordServiceTest {
     @InjectMocks
     private MedicalRecordService medicalRecordService;
 
-    private AutoCloseable openedMocks;
+    private Pet pet;
+    private MedicalRecord medicalRecord;
 
     @BeforeEach
     void setUp() {
-        openedMocks = MockitoAnnotations.openMocks(this);
-    }
+        pet = new Pet();
+        pet.setId(1L);
+        pet.setName("Buddy");
+        pet.setOwnerName("John Doe");
 
-    @AfterEach
-    void tearDown() throws Exception {
-        openedMocks.close();
+        medicalRecord = new MedicalRecord();
+        medicalRecord.setId(1L);
+        medicalRecord.setDiagnosis("Surgery");
+        medicalRecord.setTreatment("Post-surgery care");
+        medicalRecord.setDateOfTreatment(LocalDate.now());
+        medicalRecord.setPet(pet);
     }
 
     @Test
     void testGetMedicalHistoryForPet() {
-        Long petId = 1L;
-        medicalRecordService.getMedicalHistoryForPet(petId);
-        verify(medicalRecordRepository).findAllByPetId(petId);
+        when(medicalRecordRepository.findAllByPetId(pet.getId())).thenReturn(List.of(medicalRecord));
+
+        List<MedicalRecord> result = medicalRecordService.getMedicalHistoryForPet(pet.getId());
+
+        assertEquals(1, result.size());
+        verify(medicalRecordRepository).findAllByPetId(pet.getId());
     }
 
     @Test
     void testCreateMedicalRecord_Success() {
-        Long petId = 1L;
-        MedicalRecord medicalRecord = new MedicalRecord();
-        when(petRepository.findById(petId)).thenReturn(Optional.of(new Pet()));
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
 
-        medicalRecordService.createMedicalRecord(petId, medicalRecord);
+        MedicalRecord result = medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
 
+        assertNotNull(result);
         verify(medicalRecordRepository).save(medicalRecord);
-        verify(emergencyTaskEventPublisher, never()).publishEmergencyTaskCreationEvent(any());
-        verify(followUpTaskEventPublisher, never()).publishFollowUpTaskCreationEvent(any());
+        verify(medicalTaskEventPublisher).publishMedicalTaskCreationEvent(any());
+        verify(followUpTaskEventPublisher).publishFollowUpTaskCreationEvent(any());
+    }
+
+    @Test
+    void testCreateMedicalRecord_Failure_PetNotFound() {
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
+        });
+
+        assertEquals("Pet not found", exception.getMessage());
+        verify(medicalRecordRepository, never()).save(any());
+        verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
+    }
+
+    @Test
+    void testCreateMedicalRecordFromAppointment_Success() {
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
+
+        MedicalRecord result = medicalRecordService.createMedicalRecordFromAppointment(pet.getId(), "Diagnosis", "Treatment");
+
+        assertNotNull(result);
+        verify(medicalRecordRepository).save(any(MedicalRecord.class));
+        verify(medicalTaskEventPublisher).publishMedicalTaskCreationEvent(any());
+    }
+
+    @Test
+    void testCreateMedicalRecordFromAppointment_Failure_PetNotFound() {
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            medicalRecordService.createMedicalRecordFromAppointment(pet.getId(), "Diagnosis", "Treatment");
+        });
+
+        assertEquals("Pet not found", exception.getMessage());
+        verify(medicalRecordRepository, never()).save(any());
+        verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
     }
 
     @Test
     void testUpdateMedicalRecord_Success() {
         Long recordId = 1L;
-        MedicalRecord medicalRecordDetails = new MedicalRecord();
-        MedicalRecord existingRecord = new MedicalRecord();
-        when(medicalRecordRepository.findById(recordId)).thenReturn(Optional.of(existingRecord));
+        MedicalRecord updatedRecord = new MedicalRecord();
+        updatedRecord.setDiagnosis("Critical surgery");
+        updatedRecord.setTreatment("Follow-up treatment");
 
-        medicalRecordService.updateMedicalRecord(recordId, medicalRecordDetails);
+        when(medicalRecordRepository.findById(recordId)).thenReturn(Optional.of(medicalRecord));
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(updatedRecord);
 
-        verify(medicalRecordRepository).save(existingRecord);
+        MedicalRecord result = medicalRecordService.updateMedicalRecord(recordId, updatedRecord);
+
+        assertEquals("Critical surgery", result.getDiagnosis());
+        verify(medicalRecordRepository).save(any(MedicalRecord.class));
+        verify(emergencyTaskEventPublisher).publishEmergencyTaskCreationEvent(any());
+        verify(followUpTaskEventPublisher).publishFollowUpTaskCreationEvent(any());
+        verify(medicalTaskEventPublisher).publishMedicalTaskCreationEvent(any());
     }
 
     @Test
-    void testDeleteMedicalRecord_Success() {
+    void testUpdateMedicalRecord_Failure_RecordNotFound() {
         Long recordId = 1L;
+        when(medicalRecordRepository.findById(recordId)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            medicalRecordService.updateMedicalRecord(recordId, medicalRecord);
+        });
+
+        assertEquals("Medical record not found", exception.getMessage());
+        verify(medicalRecordRepository, never()).save(any());
+        verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
+    }
+
+    @Test
+    void testDeleteMedicalRecord() {
+        Long recordId = 1L;
+        doNothing().when(medicalRecordRepository).deleteById(recordId);
+
         medicalRecordService.deleteMedicalRecord(recordId);
+
         verify(medicalRecordRepository).deleteById(recordId);
     }
 
     @Test
-    void testCreateMedicalRecordFromAppointment_Success() {
-        Long petId = 1L;
-        Pet pet = new Pet();
-        pet.setId(petId);
-        String diagnosis = "Checkup";
-        String treatment = "Standard treatment";
+    void testCriticalConditionTriggersEmergencyTask() {
+        medicalRecord.setDiagnosis("Critical condition");
 
-        when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
-        MedicalRecord savedRecord = new MedicalRecord();
-        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(savedRecord);
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
 
-        medicalRecordService.createMedicalRecordFromAppointment(petId, diagnosis, treatment);
+        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
 
-        verify(medicalRecordRepository).save(any(MedicalRecord.class));
-        verify(emergencyTaskEventPublisher, never()).publishEmergencyTaskCreationEvent(any(EmergencyTaskCreationEvent.class));
-        verify(followUpTaskEventPublisher, never()).publishFollowUpTaskCreationEvent(any(FollowUpTaskCreationEvent.class));
+        verify(emergencyTaskEventPublisher).publishEmergencyTaskCreationEvent(any());
     }
 
     @Test
-    void testCreateMedicalRecordFromAppointment_WithCriticalCondition() {
-        Long petId = 1L;
-        Pet pet = new Pet();
-        pet.setId(petId);
-        String diagnosis = "Critical condition";
-        String treatment = "Emergency treatment";
+    void testFollowUpRequiredTriggersFollowUpTask() {
+        medicalRecord.setDiagnosis("Surgery required");
 
-        when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
-        MedicalRecord savedRecord = new MedicalRecord();
-        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(savedRecord);
+        when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
 
-        medicalRecordService.createMedicalRecordFromAppointment(petId, diagnosis, treatment);
+        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
 
-        verify(medicalRecordRepository).save(any(MedicalRecord.class));
-        verify(emergencyTaskEventPublisher).publishEmergencyTaskCreationEvent(any(EmergencyTaskCreationEvent.class));
-        verify(followUpTaskEventPublisher, never()).publishFollowUpTaskCreationEvent(any(FollowUpTaskCreationEvent.class));
+        verify(followUpTaskEventPublisher).publishFollowUpTaskCreationEvent(any());
     }
 }

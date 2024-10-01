@@ -4,15 +4,34 @@ import com.wolfhack.vetoptim.common.event.appointment.AppointmentTaskCreationEve
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
+
+@ExtendWith(MockitoExtension.class)
 class AppointmentTaskEventPublisherTest {
 
     @Mock
@@ -21,24 +40,18 @@ class AppointmentTaskEventPublisherTest {
     @InjectMocks
     private AppointmentTaskEventPublisher appointmentTaskEventPublisher;
 
-	private AutoCloseable autoCloseable;
-
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        ReflectionTestUtils.setField(appointmentTaskEventPublisher, "appointmentTaskExchange", "appointment-task-exchange");
+        ReflectionTestUtils.setField(appointmentTaskEventPublisher, "appointmentTaskRoutingKey", "task.appointment");
     }
 
     @Test
     void testPublishAppointmentTaskCreationEvent() {
-        AppointmentTaskCreationEvent event = new AppointmentTaskCreationEvent(1L, 1L, "PetName", "VetName", "Checkup", "Checkup task");
+        AppointmentTaskCreationEvent event = new AppointmentTaskCreationEvent(1L, 2L, "Buddy", "Dr. Smith", "Checkup", "Checkup for Buddy");
 
         appointmentTaskEventPublisher.publishAppointmentTaskCreationEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), eq(event));
+        verify(rabbitTemplate).convertAndSend("appointment-task-exchange", "task.appointment", event);
     }
 }

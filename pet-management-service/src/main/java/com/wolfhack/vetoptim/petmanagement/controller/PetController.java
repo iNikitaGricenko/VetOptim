@@ -25,17 +25,17 @@ public class PetController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Pet> getPetById(@PathVariable Long id) {
+	public ResponseEntity<Pet> getPetById(@PathVariable("id") Long id) {
 		return ResponseEntity.of(petService.getPetById(id));
 	}
 
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<List<Pet>> getPetsByOwnerId(@PathVariable Long ownerId) {
+    public ResponseEntity<List<Pet>> getPetsByOwnerId(@PathVariable("ownerId") Long ownerId) {
         return ResponseEntity.ok(petService.getAllPetsByOwnerId(ownerId));
     }
 
 	@GetMapping("/{petId}/health-summary")
-	public ResponseEntity<PetHealthSummary> getPetHealthSummary(@PathVariable Long petId) {
+	public ResponseEntity<PetHealthSummary> getPetHealthSummary(@PathVariable("petId") Long petId) {
 		PetHealthSummary summary = petHealthAnalyticsService.getPetHealthSummary(petId);
 		return ResponseEntity.ok(summary);
 	}
@@ -46,12 +46,12 @@ public class PetController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<Pet> updatePet(@PathVariable Long id, @RequestBody Pet petDetails) {
+	public ResponseEntity<Pet> updatePet(@PathVariable("id") Long id, @RequestBody Pet petDetails) {
 		return ResponseEntity.ok(petService.updatePet(id, petDetails));
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deletePet(@PathVariable Long id) {
+	public ResponseEntity<Void> deletePet(@PathVariable("id") Long id) {
 		petService.deletePet(id);
 		return ResponseEntity.noContent().build();
 	}

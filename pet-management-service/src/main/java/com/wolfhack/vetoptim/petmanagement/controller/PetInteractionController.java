@@ -16,12 +16,12 @@ public class PetInteractionController {
 	private final PetInteractionService petInteractionService;
 
 	@GetMapping
-	public ResponseEntity<List<PetInteraction>> getPetInteractions(@PathVariable Long petId) {
+	public ResponseEntity<List<PetInteraction>> getPetInteractions(@PathVariable("petId") Long petId) {
 		return ResponseEntity.ok(petInteractionService.getPetInteractions(petId));
 	}
 
 	@PostMapping
-	public ResponseEntity<PetInteraction> logInteraction(@PathVariable Long petId, @RequestBody PetInteraction interaction) {
+	public ResponseEntity<PetInteraction> logInteraction(@PathVariable("petId") Long petId, @RequestBody PetInteraction interaction) {
 		return ResponseEntity.ok(petInteractionService.logInteraction(interaction));
 	}
 

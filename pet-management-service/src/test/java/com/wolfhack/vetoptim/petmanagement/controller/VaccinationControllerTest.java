@@ -2,19 +2,24 @@ package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
 import com.wolfhack.vetoptim.petmanagement.service.VaccinationService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.List;
+import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(MockitoExtension.class)
 class VaccinationControllerTest {
 
     @Mock
@@ -23,61 +28,56 @@ class VaccinationControllerTest {
     @InjectMocks
     private VaccinationController vaccinationController;
 
-	private AutoCloseable autoCloseable;
+    private MockMvc mockMvc;
 
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        mockMvc = MockMvcBuilders.standaloneSetup(vaccinationController).build();
     }
 
     @Test
-    void testGetVaccinationsForPet_Success() {
-        Long petId = 1L;
-        List<Vaccination> vaccinations = List.of(new Vaccination());
-        when(vaccinationService.getVaccinationsForPet(petId)).thenReturn(vaccinations);
+    void testGetVaccinationsForPet() throws Exception {
+        when(vaccinationService.getVaccinationsForPet(1L)).thenReturn(Collections.emptyList());
 
-        ResponseEntity<List<Vaccination>> response = vaccinationController.getVaccinationsForPet(petId);
+        mockMvc.perform(get("/vaccinations/pet/1"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(vaccinations, response.getBody());
+        verify(vaccinationService).getVaccinationsForPet(1L);
     }
 
     @Test
-    void testCreateVaccination_Success() {
-        Long petId = 1L;
+    void testCreateVaccination() throws Exception {
         Vaccination vaccination = new Vaccination();
-        when(vaccinationService.createVaccination(petId, vaccination)).thenReturn(vaccination);
+        when(vaccinationService.createVaccination(anyLong(), any(Vaccination.class))).thenReturn(vaccination);
 
-        ResponseEntity<Vaccination> response = vaccinationController.createVaccination(petId, vaccination);
+        mockMvc.perform(post("/vaccinations/pet/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"vaccineName\": \"Rabies\"}"))
+            .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(vaccination, response.getBody());
+        verify(vaccinationService).createVaccination(anyLong(), any(Vaccination.class));
     }
 
     @Test
-    void testUpdateVaccination_Success() {
-        Long vaccinationId = 1L;
+    void testUpdateVaccination() throws Exception {
         Vaccination vaccination = new Vaccination();
-        when(vaccinationService.updateVaccination(vaccinationId, vaccination)).thenReturn(vaccination);
+        when(vaccinationService.updateVaccination(anyLong(), any(Vaccination.class))).thenReturn(vaccination);
 
-        ResponseEntity<Vaccination> response = vaccinationController.updateVaccination(vaccinationId, vaccination);
+        mockMvc.perform(put("/vaccinations/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"vaccineName\": \"Rabies\"}"))
+            .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(vaccination, response.getBody());
+        verify(vaccinationService).updateVaccination(anyLong(), any(Vaccination.class));
     }
 
     @Test
-    void testDeleteVaccination_Success() {
-        Long vaccinationId = 1L;
+    void testDeleteVaccination() throws Exception {
+        mockMvc.perform(delete("/vaccinations/1"))
+            .andExpect(status().isNoContent());
 
-        ResponseEntity<Void> response = vaccinationController.deleteVaccination(vaccinationId);
-
-        assertEquals(204, response.getStatusCode().value());
-        verify(vaccinationService).deleteVaccination(vaccinationId);
+        verify(vaccinationService).deleteVaccination(1L);
     }
+
 }

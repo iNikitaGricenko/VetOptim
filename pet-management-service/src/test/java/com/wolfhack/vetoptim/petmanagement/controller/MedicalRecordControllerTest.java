@@ -5,10 +5,15 @@ import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
@@ -16,6 +21,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Collections;
+
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@ExtendWith(MockitoExtension.class)
 class MedicalRecordControllerTest {
 
     @Mock
@@ -24,61 +46,55 @@ class MedicalRecordControllerTest {
     @InjectMocks
     private MedicalRecordController medicalRecordController;
 
-	private AutoCloseable autoCloseable;
+    private MockMvc mockMvc;
 
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        mockMvc = MockMvcBuilders.standaloneSetup(medicalRecordController).build();
     }
 
     @Test
-    void testGetMedicalHistory_Success() {
-        Long petId = 1L;
-        List<MedicalRecord> records = List.of(new MedicalRecord());
-        when(medicalRecordService.getMedicalHistoryForPet(petId)).thenReturn(records);
+    void testGetMedicalHistory() throws Exception {
+        when(medicalRecordService.getMedicalHistoryForPet(1L)).thenReturn(Collections.emptyList());
 
-        ResponseEntity<List<MedicalRecord>> response = medicalRecordController.getMedicalHistory(petId);
+        mockMvc.perform(get("/pets/1/medical-records"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(records, response.getBody());
+        verify(medicalRecordService).getMedicalHistoryForPet(1L);
     }
 
     @Test
-    void testCreateMedicalRecord_Success() {
-        Long petId = 1L;
+    void testCreateMedicalRecord() throws Exception {
         MedicalRecord medicalRecord = new MedicalRecord();
-        when(medicalRecordService.createMedicalRecord(petId, medicalRecord)).thenReturn(medicalRecord);
+        when(medicalRecordService.createMedicalRecord(anyLong(), any(MedicalRecord.class))).thenReturn(medicalRecord);
 
-        ResponseEntity<MedicalRecord> response = medicalRecordController.createMedicalRecord(petId, medicalRecord);
+        mockMvc.perform(post("/pets/1/medical-records")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"diagnosis\": \"test\"}"))
+                .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(medicalRecord, response.getBody());
+        verify(medicalRecordService).createMedicalRecord(anyLong(), any(MedicalRecord.class));
     }
 
     @Test
-    void testUpdateMedicalRecord_Success() {
-        Long recordId = 1L;
-        MedicalRecord medicalRecord = new MedicalRecord();
-        when(medicalRecordService.updateMedicalRecord(recordId, medicalRecord)).thenReturn(medicalRecord);
+    void testUpdateMedicalRecord() throws Exception {
+        MedicalRecord updatedRecord = new MedicalRecord();
+        when(medicalRecordService.updateMedicalRecord(anyLong(), any(MedicalRecord.class))).thenReturn(updatedRecord);
 
-        ResponseEntity<MedicalRecord> response = medicalRecordController.updateMedicalRecord(recordId, medicalRecord);
+        mockMvc.perform(put("/pets/1/medical-records/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"diagnosis\": \"test\"}"))
+                .andExpect(status().isOk());
 
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(medicalRecord, response.getBody());
+        verify(medicalRecordService).updateMedicalRecord(anyLong(), any(MedicalRecord.class));
     }
 
     @Test
-    void testDeleteMedicalRecord_Success() {
-        Long recordId = 1L;
+    void testDeleteMedicalRecord() throws Exception {
+        mockMvc.perform(delete("/pets/1/medical-records/1"))
+                .andExpect(status().isNoContent());
 
-        ResponseEntity<Void> response = medicalRecordController.deleteMedicalRecord(recordId);
-
-        assertEquals(204, response.getStatusCode().value());
-        verify(medicalRecordService).deleteMedicalRecord(recordId);
+        verify(medicalRecordService).deleteMedicalRecord(1L);
     }
 }

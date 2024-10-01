@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface OwnerClient {
 
     @GetMapping("/owners/{id}/exists")
-    boolean ownerExists(@PathVariable Long id);
+    boolean ownerExists(@PathVariable("id") Long id);
 
     @GetMapping("/owners/{id}")
-    OwnerDTO getOwnerById(@PathVariable Long id);
+    OwnerDTO getOwnerById(@PathVariable("id") Long id);
 }

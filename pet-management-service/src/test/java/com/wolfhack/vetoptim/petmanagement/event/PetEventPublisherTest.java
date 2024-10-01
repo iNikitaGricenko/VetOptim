@@ -6,15 +6,20 @@ import com.wolfhack.vetoptim.common.event.pet.PetUpdatedEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class PetEventPublisherTest {
 
     @Mock
@@ -23,16 +28,9 @@ class PetEventPublisherTest {
     @InjectMocks
     private PetEventPublisher petEventPublisher;
 
-	private AutoCloseable autoCloseable;
-
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		autoCloseable = MockitoAnnotations.openMocks(this);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        autoCloseable.close();
+        ReflectionTestUtils.setField(petEventPublisher, "petExchange", "pet-exchange");
     }
 
     @Test
@@ -41,7 +39,7 @@ class PetEventPublisherTest {
 
         petEventPublisher.publishPetCreatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(anyString(), eq("pet.created"), eq(event));
+        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.created", event);
     }
 
     @Test
@@ -50,7 +48,7 @@ class PetEventPublisherTest {
 
         petEventPublisher.publishPetUpdatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(anyString(), eq("pet.updated"), eq(event));
+        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.updated", event);
     }
 
     @Test
@@ -59,6 +57,6 @@ class PetEventPublisherTest {
 
         petEventPublisher.publishPetDeletedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend(anyString(), eq("pet.deleted"), eq(event));
+        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.deleted", event);
     }
 }
