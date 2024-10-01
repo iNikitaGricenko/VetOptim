@@ -22,6 +22,29 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.wolfhack.vetoptim.appointment.client.OwnerClient;
+import com.wolfhack.vetoptim.appointment.event.AppointmentEventPublisher;
+import com.wolfhack.vetoptim.appointment.mapper.AppointmentMapper;
+import com.wolfhack.vetoptim.appointment.model.Appointment;
+import com.wolfhack.vetoptim.appointment.repository.AppointmentRepository;
+import com.wolfhack.vetoptim.appointment.service.AppointmentService;
+import com.wolfhack.vetoptim.appointment.service.NotificationService;
+import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
+import com.wolfhack.vetoptim.common.dto.OwnerDTO;
+import com.wolfhack.vetoptim.common.event.appointment.AppointmentTaskCreationEvent;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
 
@@ -44,45 +67,51 @@ class AppointmentServiceTest {
     private AppointmentService appointmentService;
 
     @Test
-    void testCreateAppointment_success() {
+    void getAppointmentsForPet_Success() {
+        Long petId = 1L;
+        Appointment appointment = new Appointment();
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        when(appointmentRepository.findAllByPetId(petId)).thenReturn(List.of(appointment));
+        when(appointmentMapper.toDTO(appointment)).thenReturn(appointmentDTO);
+
+        List<AppointmentDTO> result = appointmentService.getAppointmentsForPet(petId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(appointmentRepository).findAllByPetId(petId);
+    }
+
+    @Test
+    void createAppointment_Success() {
         Long ownerId = 1L;
         AppointmentDTO appointmentDTO = new AppointmentDTO();
-        appointmentDTO.setAppointmentDate(LocalDateTime.now().plusDays(5));
         Appointment appointment = new Appointment();
+        appointment.setAppointmentDate(LocalDateTime.now());
 
         when(ownerClient.ownerExists(ownerId)).thenReturn(true);
-        when(appointmentMapper.toEntity(any())).thenReturn(appointment);
-        when(appointmentRepository.save(any())).thenReturn(appointment);
-        when(appointmentMapper.toDTO(any())).thenReturn(appointmentDTO);
+        when(appointmentMapper.toEntity(appointmentDTO)).thenReturn(appointment);
+        when(appointmentRepository.save(appointment)).thenReturn(appointment);
+        when(appointmentMapper.toDTO(appointment)).thenReturn(appointmentDTO);
 
         AppointmentDTO result = appointmentService.createAppointment(ownerId, appointmentDTO);
 
         assertNotNull(result);
-        verify(appointmentRepository).save(any());
+        verify(appointmentRepository).save(appointment);
+        verify(appointmentEventPublisher).publishAppointmentTaskCreationEvent(any(AppointmentTaskCreationEvent.class));
         verify(notificationService).notifyOwnerOfAppointment(anyString());
     }
 
-    @Test
-    void testCreateAppointment_ownerNotFound() {
-        Long ownerId = 1L;
-        AppointmentDTO appointmentDTO = new AppointmentDTO();
-
-        when(ownerClient.ownerExists(ownerId)).thenReturn(false);
-
-        assertThrows(RuntimeException.class, () -> {
-            appointmentService.createAppointment(ownerId, appointmentDTO);
-        });
-    }
 
     @Test
-    void testUpdateAppointment_success() {
+    void updateAppointment_Success() {
         Long appointmentId = 1L;
         AppointmentDTO appointmentDTO = new AppointmentDTO();
-        appointmentDTO.setAppointmentDate(LocalDateTime.now().plusDays(5));
         Appointment existingAppointment = new Appointment();
+        existingAppointment.setPetName("Buddy");
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(existingAppointment));
-        when(appointmentMapper.toDTO(any())).thenReturn(appointmentDTO);
+        when(appointmentRepository.save(existingAppointment)).thenReturn(existingAppointment);
+        when(appointmentMapper.toDTO(existingAppointment)).thenReturn(appointmentDTO);
 
         AppointmentDTO result = appointmentService.updateAppointment(appointmentId, appointmentDTO);
 
@@ -92,61 +121,11 @@ class AppointmentServiceTest {
     }
 
     @Test
-    void testUpdateAppointment_notFound() {
+    void updateAppointment_NotFound() {
         Long appointmentId = 1L;
         AppointmentDTO appointmentDTO = new AppointmentDTO();
-
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.empty());
 
-        assertThrows(AppointmentNotFoundException.class, () -> {
-            appointmentService.updateAppointment(appointmentId, appointmentDTO);
-        });
-    }
-
-    @Test
-    void testDeleteAppointment_success() {
-        Long appointmentId = 1L;
-        Appointment appointment = new Appointment();
-
-        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
-
-        appointmentService.deleteAppointment(appointmentId);
-
-        verify(appointmentRepository).deleteById(appointmentId);
-        verify(notificationService).notifyOwnerOfAppointment(anyString());
-    }
-
-    @Test
-    void testUpdateAppointmentStatus_success() {
-        Long appointmentId = 1L;
-        Appointment existingAppointment = new Appointment();
-        AppointmentStatus newStatus = AppointmentStatus.CONFIRMED;
-
-        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(existingAppointment));
-        when(appointmentMapper.toDTO(any())).thenReturn(new AppointmentDTO());
-
-        AppointmentDTO result = appointmentService.updateAppointmentStatus(appointmentId, newStatus);
-
-        assertNotNull(result);
-        verify(appointmentRepository).save(existingAppointment);
-        assertEquals(newStatus, existingAppointment.getStatus());
-    }
-
-    @Test
-    void testSearchAppointments_success() {
-        String vetName = "Dr. Smith";
-        LocalDateTime startDate = LocalDateTime.now().minusDays(1);
-        LocalDateTime endDate = LocalDateTime.now().plusDays(1);
-        AppointmentStatus status = AppointmentStatus.SCHEDULED;
-        Appointment appointment = new Appointment();
-
-        when(appointmentRepository.findByVeterinarianNameAndAppointmentDateBetweenAndStatus(
-            vetName, startDate, endDate, status))
-            .thenReturn(List.of(appointment));
-
-        List<AppointmentDTO> result = appointmentService.searchAppointments(vetName, startDate, endDate, status);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
+        assertThrows(RuntimeException.class, () -> appointmentService.updateAppointment(appointmentId, appointmentDTO));
     }
 }

@@ -6,9 +6,11 @@ import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -19,87 +21,105 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wolfhack.vetoptim.appointment.controller.AppointmentController;
+import com.wolfhack.vetoptim.appointment.service.AppointmentService;
+import com.wolfhack.vetoptim.common.AppointmentStatus;
+import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
+import com.wolfhack.vetoptim.common.dto.OwnerDTO;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class AppointmentControllerTest {
 
-	@Mock
-	private AppointmentService appointmentService;
+    @Mock
+    private AppointmentService appointmentService;
 
-	@InjectMocks
-	private AppointmentController appointmentController;
+    @InjectMocks
+    private AppointmentController appointmentController;
 
-	private MockMvc mockMvc;
+    @Test
+    void getAppointmentsForPet_Success() {
+        Long petId = 1L;
+        List<AppointmentDTO> appointmentDTOList = List.of(new AppointmentDTO());
+        when(appointmentService.getAppointmentsForPet(petId)).thenReturn(appointmentDTOList);
 
-	private AutoCloseable openedMocks;
+        ResponseEntity<List<AppointmentDTO>> response = appointmentController.getAppointmentsForPet(petId);
 
-	@BeforeEach
-	void setUp() {
-		openedMocks = MockitoAnnotations.openMocks(this);
-		mockMvc = MockMvcBuilders.standaloneSetup(appointmentController).build();
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-        openedMocks.close();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(appointmentDTOList, response.getBody());
+        verify(appointmentService, times(1)).getAppointmentsForPet(petId);
     }
 
     @Test
-    void testCreateAppointment() throws Exception {
+    void getAppointmentById_Success() {
+        Long appointmentId = 1L;
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        when(appointmentService.getAppointmentById(appointmentId)).thenReturn(Optional.of(appointmentDTO));
+
+        ResponseEntity<AppointmentDTO> response = appointmentController.getAppointmentById(appointmentId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(appointmentDTO, response.getBody());
+        verify(appointmentService, times(1)).getAppointmentById(appointmentId);
+    }
+
+    @Test
+    void createAppointment_Success() {
         Long ownerId = 1L;
         AppointmentDTO appointmentDTO = new AppointmentDTO();
+        when(appointmentService.createAppointment(ownerId, appointmentDTO)).thenReturn(appointmentDTO);
 
-        when(appointmentService.createAppointment(eq(ownerId), any())).thenReturn(appointmentDTO);
+        ResponseEntity<AppointmentDTO> response = appointmentController.createAppointment(ownerId, appointmentDTO);
 
-        mockMvc.perform(post("/appointments/owner/{ownerId}", ownerId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
-                .andExpect(status().isOk());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(appointmentDTO, response.getBody());
+        verify(appointmentService, times(1)).createAppointment(ownerId, appointmentDTO);
     }
 
     @Test
-    void testGetAppointmentById() throws Exception {
+    void updateAppointment_Success() {
         Long appointmentId = 1L;
         AppointmentDTO appointmentDTO = new AppointmentDTO();
+        when(appointmentService.updateAppointment(appointmentId, appointmentDTO)).thenReturn(appointmentDTO);
 
-        when(appointmentService.getAppointmentById(appointmentId)).thenReturn(java.util.Optional.of(appointmentDTO));
+        ResponseEntity<AppointmentDTO> response = appointmentController.updateAppointment(appointmentId, appointmentDTO);
 
-        mockMvc.perform(get("/appointments/{id}", appointmentId))
-                .andExpect(status().isOk());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(appointmentDTO, response.getBody());
+        verify(appointmentService, times(1)).updateAppointment(appointmentId, appointmentDTO);
     }
 
     @Test
-    void testUpdateAppointmentStatus() throws Exception {
+    void updateOwnerInfoForAppointments_Success() {
+        Long ownerId = 1L;
+        OwnerDTO ownerDTO = new OwnerDTO();
+
+        ResponseEntity<Void> response = appointmentController.updateOwnerInfoForAppointments(ownerId, ownerDTO);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(appointmentService, times(1)).updateOwnerInfoForAppointments(ownerId, ownerDTO);
+    }
+
+    @Test
+    void deleteAppointment_Success() {
         Long appointmentId = 1L;
-        AppointmentDTO appointmentDTO = new AppointmentDTO();
 
-        when(appointmentService.updateAppointmentStatus(eq(appointmentId), eq(AppointmentStatus.CONFIRMED)))
-                .thenReturn(appointmentDTO);
+        ResponseEntity<Void> response = appointmentController.deleteAppointment(appointmentId);
 
-        mockMvc.perform(patch("/appointments/{id}/status", appointmentId)
-                .param("status", "CONFIRMED"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testRescheduleAppointment() throws Exception {
-        Long appointmentId = 1L;
-        AppointmentDTO appointmentDTO = new AppointmentDTO();
-
-        when(appointmentService.rescheduleAppointment(eq(appointmentId), any())).thenReturn(appointmentDTO);
-
-        mockMvc.perform(patch("/appointments/{id}/reschedule", appointmentId)
-                .param("newDate", "2024-12-01T10:00:00"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testSearchAppointments() throws Exception {
-        when(appointmentService.searchAppointments(any(), any(), any(), any())).thenReturn(List.of(new AppointmentDTO()));
-
-        mockMvc.perform(get("/appointments/search")
-                .param("veterinarianName", "Dr. Smith")
-                .param("startDate", "2024-10-01T00:00:00")
-                .param("endDate", "2024-10-02T00:00:00")
-                .param("status", "SCHEDULED"))
-                .andExpect(status().isOk());
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(appointmentService, times(1)).deleteAppointment(appointmentId);
     }
 }

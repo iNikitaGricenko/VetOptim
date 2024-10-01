@@ -7,56 +7,73 @@ import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Mockito.verify;
 
+import com.wolfhack.vetoptim.appointment.service.AppointmentService;
+import com.wolfhack.vetoptim.common.AppointmentStatus;
+import com.wolfhack.vetoptim.common.TaskStatus;
+import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
+import com.wolfhack.vetoptim.appointment.listener.TaskCompletionListener;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.scheduling.annotation.Async;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class TaskCompletionListenerTest {
 
-	@Mock
-	private AppointmentService appointmentService;
+    @Mock
+    private AppointmentService appointmentService;
 
-	@InjectMocks
-	private TaskCompletionListener taskCompletionListener;
+    @InjectMocks
+    private TaskCompletionListener taskCompletionListener;
 
-	private AutoCloseable openedMocks;
+    @Test
+    void handleTaskCompletion_Success_CompletedStatus() {
+        TaskCompletedEvent taskCompletedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Completed", TaskStatus.COMPLETED);
 
-	@BeforeEach
-	void setUp() {
-		openedMocks = MockitoAnnotations.openMocks(this);
-	}
+        taskCompletionListener.handleTaskCompletion(taskCompletedEvent);
 
-	@AfterEach
-	void tearDown() throws Exception {
-		openedMocks.close();
-	}
+        verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.COMPLETED);
+    }
 
-	@Test
-	public void testHandleTaskCompletion_TaskCompleted() {
-		TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "CHECKUP", "Routine Checkup", TaskStatus.COMPLETED);
+    @Test
+    void handleTaskCompletion_Success_FailedStatus() {
+        TaskCompletedEvent taskFailedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Failed", TaskStatus.FAILED);
 
-		taskCompletionListener.handleTaskCompletion(event);
+        taskCompletionListener.handleTaskCompletion(taskFailedEvent);
 
-		verify(appointmentService).updateAppointmentStatus(1L, AppointmentStatus.COMPLETED);
-	}
+        verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.CANCELED);
+    }
 
-	@Test
-	public void testHandleTaskCompletion_TaskEscalated() {
-		TaskCompletedEvent event = new TaskCompletedEvent(2L, 102L, "SURGERY", "Emergency Surgery", TaskStatus.ESCALATED);
+    @Test
+    void handleTaskCompletion_Success_EscalatedStatus() {
+        TaskCompletedEvent taskEscalatedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Escalated", TaskStatus.ESCALATED);
 
-		taskCompletionListener.handleTaskCompletion(event);
+        taskCompletionListener.handleTaskCompletion(taskEscalatedEvent);
 
-		verify(appointmentService).updateAppointmentStatus(2L, AppointmentStatus.ESCALATED);
-	}
+        verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.ESCALATED);
+    }
 
-	@Test
-	public void testHandleTaskCompletion_TaskFailed() {
-		TaskCompletedEvent event = new TaskCompletedEvent(3L, 103L, "DENTAL", "Dental Cleaning", TaskStatus.FAILED);
+    @Test
+    void handleTaskCompletion_ExceptionHandling() {
+        TaskCompletedEvent taskCompletedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Completed", TaskStatus.COMPLETED);
+        doThrow(new RuntimeException("Appointment not found")).when(appointmentService).updateAppointmentStatus(anyLong(), any());
 
-		taskCompletionListener.handleTaskCompletion(event);
+        taskCompletionListener.handleTaskCompletion(taskCompletedEvent);
 
-		verify(appointmentService).updateAppointmentStatus(3L, AppointmentStatus.CANCELED);
-	}
+        verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.COMPLETED);
+    }
 }
