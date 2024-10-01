@@ -7,6 +7,8 @@ import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,17 +33,22 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.exchange.notification}")
     private String notificationExchange;
 
-    @Value("${rabbitmq.queue.notification.urgent}")
-    private String urgentTaskQueue;
-
-    @Value("${rabbitmq.queue.notification.resource.depletion}")
-    private String resourceDepletionQueue;
-
     @Value("${rabbitmq.routingKey.notification.urgent}")
     private String urgentTaskRoutingKey;
 
     @Value("${rabbitmq.routingKey.notification.resource.depletion}")
     private String resourceDepletionRoutingKey;
+
+    @Value("${rabbitmq.queue.notification.urgent}")
+    private String urgentTaskQueue;
+
+    @Value("${rabbitmq.queue.resource.depleted}")
+    private String resourceDepletionQueue;
+
+    @Bean
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
+    }
 
     @Bean
     public ConnectionFactory connectionFactory() {
@@ -53,7 +60,9 @@ public class RabbitMQConfig {
 
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        return new RabbitTemplate(connectionFactory);
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(jsonMessageConverter());
+        return rabbitTemplate;
     }
 
     @Bean
@@ -72,12 +81,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding urgentTaskBinding(Queue urgentTaskQueue, TopicExchange notificationExchange) {
-        return BindingBuilder.bind(urgentTaskQueue).to(notificationExchange).with(urgentTaskRoutingKey);
+    public Binding urgentTaskBinding() {
+        return BindingBuilder.bind(urgentTaskQueue())
+                .to(notificationExchange())
+                .with(urgentTaskRoutingKey);
     }
 
     @Bean
-    public Binding resourceDepletionBinding(Queue resourceDepletionQueue, TopicExchange notificationExchange) {
-        return BindingBuilder.bind(resourceDepletionQueue).to(notificationExchange).with(resourceDepletionRoutingKey);
+    public Binding resourceDepletionBinding() {
+        return BindingBuilder.bind(resourceDepletionQueue())
+                .to(notificationExchange())
+                .with(resourceDepletionRoutingKey);
     }
 }

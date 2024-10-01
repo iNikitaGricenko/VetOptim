@@ -30,6 +30,7 @@ public class TaskAssignmentService {
             staffRepository.save(assignedStaff);
 
             task.setStatus(TaskStatus.IN_PROGRESS);
+            task.setAssignedStaff(assignedStaff);
             taskRepository.save(task);
 
             log.info("Task with ID: {} assigned to staff with ID: {}", task.getId(), assignedStaff.getId());

@@ -76,7 +76,7 @@ class TaskControllerTest {
         mockMvc.perform(post("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"description\": \"New Task\"}"))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L));
 
         verify(taskService, times(1)).createTask(any(Task.class));

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class TaskSchedulerTest {
+class TasksSchedulerTest {
 
     @Mock
     private TaskRepository taskRepository;
@@ -26,7 +26,7 @@ class TaskSchedulerTest {
     private NotificationService notificationService;
 
     @InjectMocks
-    private TaskScheduler taskScheduler;
+    private TasksScheduler taskScheduler;
 
     @Test
     void testEscalateTasks() {

@@ -1,5 +1,6 @@
 package com.wolfhack.vetoptim.taskresource.service;
 
+import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.taskresource.model.Staff;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.StaffRepository;
@@ -25,6 +26,7 @@ public class WorkloadBalancingService {
         if (!availableStaff.isEmpty()) {
             Staff leastBusyStaff = availableStaff.getFirst();
             task.setAssignedStaff(leastBusyStaff);
+            task.setStatus(TaskStatus.IN_PROGRESS);
             taskRepository.save(task);
 
             leastBusyStaff.setAvailable(false);
