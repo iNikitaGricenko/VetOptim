@@ -151,7 +151,11 @@ jobs:
           docker push vetoptim/pet-management-service
           docker push vetoptim/task-resource-service
 
-  # Deployment job (if applicable)
-  deploy:
-    needs: docker
-    runs-on: ubuntu-latest
+#  # Deployment job (if applicable)
+#  deploy:
+#    needs: docker
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Deploy to Kubernetes or Server
+#        run: |
+#          echo "Deployment logic goes here"
