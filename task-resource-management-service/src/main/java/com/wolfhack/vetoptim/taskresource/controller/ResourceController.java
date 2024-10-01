@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.controller;
 
-import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.common.dto.ResourceDTO;
+import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

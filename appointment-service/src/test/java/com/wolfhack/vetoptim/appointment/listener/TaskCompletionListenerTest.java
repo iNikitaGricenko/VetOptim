@@ -4,30 +4,11 @@ import com.wolfhack.vetoptim.appointment.service.AppointmentService;
 import com.wolfhack.vetoptim.common.AppointmentStatus;
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import static org.mockito.Mockito.verify;
-
-import com.wolfhack.vetoptim.appointment.service.AppointmentService;
-import com.wolfhack.vetoptim.common.AppointmentStatus;
-import com.wolfhack.vetoptim.common.TaskStatus;
-import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
-import com.wolfhack.vetoptim.appointment.listener.TaskCompletionListener;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.scheduling.annotation.Async;
 
 import static org.mockito.Mockito.*;
 

@@ -1,7 +1,6 @@
 package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.common.TaskType;
-import com.wolfhack.vetoptim.common.dto.ResourceUsageDTO;
 import com.wolfhack.vetoptim.common.event.resource.ResourceDepletedEvent;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
 import com.wolfhack.vetoptim.taskresource.event.TaskEventPublisher;

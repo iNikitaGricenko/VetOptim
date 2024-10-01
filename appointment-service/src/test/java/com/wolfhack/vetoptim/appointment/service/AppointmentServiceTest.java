@@ -2,12 +2,11 @@ package com.wolfhack.vetoptim.appointment.service;
 
 import com.wolfhack.vetoptim.appointment.client.OwnerClient;
 import com.wolfhack.vetoptim.appointment.event.AppointmentEventPublisher;
-import com.wolfhack.vetoptim.appointment.exception.AppointmentNotFoundException;
 import com.wolfhack.vetoptim.appointment.mapper.AppointmentMapper;
 import com.wolfhack.vetoptim.appointment.model.Appointment;
 import com.wolfhack.vetoptim.appointment.repository.AppointmentRepository;
-import com.wolfhack.vetoptim.common.AppointmentStatus;
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
+import com.wolfhack.vetoptim.common.event.appointment.AppointmentTaskCreationEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,29 +19,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import com.wolfhack.vetoptim.appointment.client.OwnerClient;
-import com.wolfhack.vetoptim.appointment.event.AppointmentEventPublisher;
-import com.wolfhack.vetoptim.appointment.mapper.AppointmentMapper;
-import com.wolfhack.vetoptim.appointment.model.Appointment;
-import com.wolfhack.vetoptim.appointment.repository.AppointmentRepository;
-import com.wolfhack.vetoptim.appointment.service.AppointmentService;
-import com.wolfhack.vetoptim.appointment.service.NotificationService;
-import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
-import com.wolfhack.vetoptim.common.dto.OwnerDTO;
-import com.wolfhack.vetoptim.common.event.appointment.AppointmentTaskCreationEvent;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

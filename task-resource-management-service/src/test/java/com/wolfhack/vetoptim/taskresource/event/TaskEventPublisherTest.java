@@ -4,26 +4,9 @@ import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.event.resource.ResourceDepletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCreatedEvent;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

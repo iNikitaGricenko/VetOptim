@@ -2,7 +2,6 @@ package com.wolfhack.vetoptim.taskresource.model;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
-import com.wolfhack.vetoptim.common.dto.ResourceUsageDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;

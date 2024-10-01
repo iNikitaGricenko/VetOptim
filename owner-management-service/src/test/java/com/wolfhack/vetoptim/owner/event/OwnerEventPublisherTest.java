@@ -3,31 +3,16 @@ package com.wolfhack.vetoptim.owner.event;
 import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
 import com.wolfhack.vetoptim.common.event.owner.OwnerDeletedEvent;
 import com.wolfhack.vetoptim.common.event.owner.OwnerUpdatedEvent;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-
-import static org.mockito.Mockito.*;
-
-import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
-import com.wolfhack.vetoptim.common.event.owner.OwnerDeletedEvent;
-import com.wolfhack.vetoptim.common.event.owner.OwnerUpdatedEvent;
-import com.wolfhack.vetoptim.owner.event.OwnerEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class OwnerEventPublisherTest {

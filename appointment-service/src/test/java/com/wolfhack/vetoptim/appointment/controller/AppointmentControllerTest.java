@@ -1,40 +1,16 @@
 package com.wolfhack.vetoptim.appointment.controller;
 
 import com.wolfhack.vetoptim.appointment.service.AppointmentService;
-import com.wolfhack.vetoptim.common.AppointmentStatus;
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.wolfhack.vetoptim.common.dto.OwnerDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.List;
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.wolfhack.vetoptim.appointment.controller.AppointmentController;
-import com.wolfhack.vetoptim.appointment.service.AppointmentService;
-import com.wolfhack.vetoptim.common.AppointmentStatus;
-import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
-import com.wolfhack.vetoptim.common.dto.OwnerDTO;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
