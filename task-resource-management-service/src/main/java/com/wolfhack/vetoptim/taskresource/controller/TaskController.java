@@ -5,10 +5,10 @@ import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/tasks")
@@ -18,43 +18,44 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
+    public ResponseEntity<List<Task>> getAllTasks() {
+        return ResponseEntity.ok(taskService.getAllTasks());
     }
 
     @GetMapping("/{id}")
-    public Optional<Task> getTaskById(@PathVariable("id") Long id) {
-        return taskService.getTaskById(id);
+    public ResponseEntity<Task> getTaskById(@PathVariable("id") Long id) {
+        return ResponseEntity.of(taskService.getTaskById(id));
     }
 
     @PostMapping
-    public Task createTask(@RequestBody Task task) {
-        return taskService.createTask(task);
+    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+        return ResponseEntity.ok(taskService.createTask(task));
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable("id") Long id, @RequestBody TaskDTO taskDTO) {
-        return taskService.updateTask(id, taskDTO);
+    public ResponseEntity<Task> updateTask(@PathVariable("id") Long id, @RequestBody TaskDTO taskDTO) {
+        return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
     }
 
     @PutMapping("/{id}/complete")
-    public Task completeTask(@PathVariable("id") Long id) {
-	    return taskService.completeTask(id);
+    public ResponseEntity<Task> completeTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(taskService.completeTask(id));
     }
 
     @PutMapping("/{id}/fail")
-    public Task failTask(@PathVariable("id") Long id) {
-	    return taskService.failTask(id);
+    public ResponseEntity<Task> failTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(taskService.failTask(id));
     }
 
     @PutMapping("/{id}/escalate")
-    public Task escalateTask(@PathVariable("id") Long id) {
-	    return taskService.escalateTask(id);
+    public ResponseEntity<Task> escalateTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(taskService.escalateTask(id));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteTask(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id) {
         taskService.deleteTask(id);
+        return ResponseEntity.noContent().build();
     }
 }

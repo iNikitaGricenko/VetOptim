@@ -4,13 +4,12 @@ import com.wolfhack.vetoptim.common.dto.ResourceDTO;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.service.ResourceService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/resources")
 @RequiredArgsConstructor
@@ -19,40 +18,29 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping
-    public List<Resource> getAllResources() {
-        log.info("Fetching all resources");
-        return resourceService.getAllResources();
+    public ResponseEntity<List<Resource>> getAllResources() {
+        return ResponseEntity.ok(resourceService.getAllResources());
     }
 
     @PostMapping
-    public Resource createResource(@RequestBody Resource resource) {
-        log.info("Creating new resource: {}", resource.getName());
-        Resource createdResource = resourceService.createResource(resource);
-        log.info("Resource created with ID: {}", createdResource.getId());
-        return createdResource;
+    public ResponseEntity<Resource> createResource(@RequestBody Resource resource) {
+        return ResponseEntity.ok(resourceService.createResource(resource));
     }
 
     @PutMapping("/{id}")
-    public Resource updateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
-        log.info("Updating resource with ID: {}", id);
-        Resource updatedResource = resourceService.updateResource(id, resourceDTO);
-        log.info("Resource updated with ID: {}", updatedResource.getId());
-        return updatedResource;
+    public ResponseEntity<Resource> updateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
+        return ResponseEntity.ok(resourceService.updateResource(id, resourceDTO));
     }
 
     @PatchMapping("/{id}")
-    public Resource partialUpdateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
-        log.info("Partially updating resource with ID: {}", id);
-        Resource updatedResource = resourceService.partialUpdateResource(id, resourceDTO);
-        log.info("Resource partially updated with ID: {}", updatedResource.getId());
-        return updatedResource;
+    public ResponseEntity<Resource> partialUpdateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
+        return ResponseEntity.ok(resourceService.partialUpdateResource(id, resourceDTO));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteResource(@PathVariable("id") Long id) {
-        log.info("Deleting resource with ID: {}", id);
+    public ResponseEntity<Void> deleteResource(@PathVariable("id") Long id) {
         resourceService.deleteResource(id);
-        log.info("Resource deleted with ID: {}", id);
+        return ResponseEntity.noContent().build();
     }
 }
