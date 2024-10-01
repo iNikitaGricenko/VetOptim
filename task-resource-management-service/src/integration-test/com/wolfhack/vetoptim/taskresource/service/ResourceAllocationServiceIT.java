@@ -1,4 +1,4 @@
-package com.wolfhack.vetoptim.taskresource.integration.service;
+package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.common.TaskType;
 import com.wolfhack.vetoptim.common.event.resource.ResourceDepletedEvent;
@@ -9,7 +9,6 @@ import com.wolfhack.vetoptim.taskresource.model.ResourceUsage;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
-import com.wolfhack.vetoptim.taskresource.service.ResourceAllocationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.verify;
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
-class ResourceAllocationServiceIntegrationTest {
+class ResourceAllocationServiceIT {
 
     @Autowired
     private ResourceAllocationService resourceAllocationService;

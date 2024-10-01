@@ -1,6 +1,5 @@
-package com.wolfhack.vetoptim.taskresource.integration.service;
+package com.wolfhack.vetoptim.taskresource.service;
 
-import com.wolfhack.vetoptim.taskresource.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.*;
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
-class NotificationServiceIntegrationTest {
+class NotificationServiceIT {
 
     @Autowired
     private MockMvc mockMvc;

@@ -1,9 +1,8 @@
-package com.wolfhack.vetoptim.taskresource.integration.service;
+package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
-import com.wolfhack.vetoptim.taskresource.service.ResourceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
-class ResourceServiceIntegrationTest {
+class ResourceServiceIntegrationIT {
 
     @Autowired
     private MockMvc mockMvc;

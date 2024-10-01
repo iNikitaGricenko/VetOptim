@@ -1,4 +1,4 @@
-package com.wolfhack.vetoptim.taskresource.integration.controller;
+package com.wolfhack.vetoptim.taskresource.controller;
 
 import com.wolfhack.vetoptim.common.ResourceType;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
-class ResourceControllerIntegrationTest {
+class ResourceControllerIT {
 
     @Autowired
     private MockMvc mockMvc;

@@ -1,10 +1,9 @@
-package com.wolfhack.vetoptim.taskresource.integration.scheduler;
+package com.wolfhack.vetoptim.taskresource.scheduler;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
-import com.wolfhack.vetoptim.taskresource.scheduler.TasksScheduler;
 import com.wolfhack.vetoptim.taskresource.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -29,7 +28,7 @@ import static org.mockito.Mockito.*;
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
-class TaskEscalationSchedulerIntegrationTest {
+class TaskEscalationSchedulerIT {
 
     @Autowired
     private TaskRepository taskRepository;
