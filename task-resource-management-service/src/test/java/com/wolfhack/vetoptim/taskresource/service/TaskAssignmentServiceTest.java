@@ -6,12 +6,11 @@ import com.wolfhack.vetoptim.taskresource.model.Staff;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.StaffRepository;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TaskAssignmentServiceTest {
 
     @Mock
@@ -30,48 +30,43 @@ class TaskAssignmentServiceTest {
     @InjectMocks
     private TaskAssignmentService taskAssignmentService;
 
-	private AutoCloseable openedMocks;
-
-	@BeforeEach
-    void setUp() {
-		openedMocks = MockitoAnnotations.openMocks(this);
-    }
-
-	@AfterEach
-	void tearDown() throws Exception {
-        openedMocks.close();
-    }
-
     @Test
-    void testAssignTaskToStaff_Success() {
+    void assignTaskToStaff_Success() {
         Task task = new Task();
-        task.setTaskType(TaskType.CHECKUP);
+        task.setId(1L);
+        task.setTaskType(TaskType.SURGERY);
 
         Staff staff = new Staff();
+        staff.setId(1L);
         staff.setAvailable(true);
 
-        when(staffRepository.findByRoleAndAvailableTrue(anyString())).thenReturn(List.of(staff));
-        when(taskRepository.save(any())).thenReturn(task);
+        List<Staff> availableStaff = List.of(staff);
+
+        when(staffRepository.findByRoleAndAvailableTrue(task.getTaskType().name())).thenReturn(availableStaff);
+        when(taskRepository.save(task)).thenReturn(task);
 
         Optional<Staff> assignedStaff = taskAssignmentService.assignTaskToStaff(task);
 
         assertTrue(assignedStaff.isPresent());
-        assertFalse(assignedStaff.get().isAvailable());
-        verify(staffRepository).save(any(Staff.class));
-        verify(taskRepository).save(any(Task.class));
+        assertEquals(staff, assignedStaff.get());
+        verify(staffRepository).save(staff);
+        verify(taskRepository).save(task);
+        assertEquals(TaskStatus.IN_PROGRESS, task.getStatus());
+        assertFalse(staff.isAvailable());
     }
 
     @Test
-    void testAssignTaskToStaff_NoAvailableStaff() {
+    void assignTaskToStaff_NoStaffAvailable() {
         Task task = new Task();
-        task.setTaskType(TaskType.CHECKUP);
+        task.setId(1L);
+        task.setTaskType(TaskType.SURGERY);
 
-        when(staffRepository.findByRoleAndAvailableTrue(anyString())).thenReturn(List.of());
+        when(staffRepository.findByRoleAndAvailableTrue(task.getTaskType().name())).thenReturn(List.of());
 
         Optional<Staff> assignedStaff = taskAssignmentService.assignTaskToStaff(task);
 
         assertFalse(assignedStaff.isPresent());
-        verify(staffRepository, never()).save(any(Staff.class));
         verify(taskRepository, never()).save(any(Task.class));
+        verify(staffRepository, never()).save(any(Staff.class));
     }
 }

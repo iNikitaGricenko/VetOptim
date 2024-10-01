@@ -2,17 +2,18 @@ package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ResourceForecastingServiceTest {
 
     @Mock
@@ -21,41 +22,31 @@ class ResourceForecastingServiceTest {
     @InjectMocks
     private ResourceForecastingService resourceForecastingService;
 
-	private AutoCloseable openedMocks;
+    private Resource resource;
 
-	@BeforeEach
+    @BeforeEach
     void setUp() {
-		openedMocks = MockitoAnnotations.openMocks(this);
-    }
-
-	@AfterEach
-	void tearDown() throws Exception {
-        openedMocks.close();
+        resource = new Resource();
+        resource.setName("Vaccine");
+        resource.setQuantity(3);
     }
 
     @Test
-    void testForecastAndRestockResources() {
-        Resource resource = new Resource();
-        resource.setQuantity(2);
-
+    void forecastAndRestockResources_TriggerRestock() {
         when(resourceRepository.findAll()).thenReturn(List.of(resource));
 
         resourceForecastingService.forecastAndRestockResources();
 
-        verify(resourceRepository).findAll();
-        verify(resourceRepository).save(any(Resource.class));
+        verify(resourceRepository).save(resource);
     }
 
     @Test
-    void testForecastAndRestockResources_SufficientStock() {
-        Resource resource = new Resource();
+    void forecastAndRestockResources_SufficientStock() {
         resource.setQuantity(10);
-
         when(resourceRepository.findAll()).thenReturn(List.of(resource));
 
         resourceForecastingService.forecastAndRestockResources();
 
-        verify(resourceRepository).findAll();
-        verify(resourceRepository, never()).save(any(Resource.class));
+        verify(resourceRepository, never()).save(resource);
     }
 }

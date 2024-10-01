@@ -7,15 +7,19 @@ import com.wolfhack.vetoptim.taskresource.service.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TaskSchedulerTest {
 
     @Mock
@@ -27,31 +31,32 @@ class TaskSchedulerTest {
     @InjectMocks
     private TaskScheduler taskScheduler;
 
-	private AutoCloseable openedMocks;
-
-	@BeforeEach
-    void setUp() {
-		openedMocks = MockitoAnnotations.openMocks(this);
-    }
-
-	@AfterEach
-    void tearDown() throws Exception {
-        openedMocks.close();
-    }
-
     @Test
     void testEscalateTasks() {
-        Task task = new Task();
-        task.setId(1L);
-        task.setStatus(TaskStatus.PENDING);
-        task.setDeadline(LocalDateTime.now().plusHours(1));
+        Task task1 = new Task();
+        task1.setId(1L);
+        task1.setStatus(TaskStatus.PENDING);
+        task1.setDeadline(LocalDateTime.now().plusHours(12));
+        task1.setDescription("Task 1 description");
 
-        when(taskRepository.findAllByStatusAndDeadlineBetween(any(), any(), any())).thenReturn(List.of(task));
+        Task task2 = new Task();
+        task2.setId(2L);
+        task2.setStatus(TaskStatus.PENDING);
+        task2.setDeadline(LocalDateTime.now().plusHours(10));
+        task2.setDescription("Task 2 description");
+
+        List<Task> tasks = List.of(task1, task2);
+
+        when(taskRepository.findAllByStatusAndDeadlineBetween(any(TaskStatus.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(tasks);
 
         taskScheduler.escalateTasks();
 
-        verify(taskRepository).findAllByStatusAndDeadlineBetween(any(), any(), any());
-        verify(taskRepository).save(task);
-        verify(notificationService).notifyStaffOfUrgentTask(task.getId(), task.getDescription());
+        verify(taskRepository, times(2)).save(any(Task.class));
+        verify(notificationService).notifyStaffOfUrgentTask(task1.getId(), task1.getDescription());
+        verify(notificationService).notifyStaffOfUrgentTask(task2.getId(), task2.getDescription());
+
+        assertEquals(TaskStatus.URGENT, task1.getStatus());
+        assertEquals(TaskStatus.URGENT, task2.getStatus());
     }
 }

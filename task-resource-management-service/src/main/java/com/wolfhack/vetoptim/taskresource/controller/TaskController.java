@@ -4,6 +4,7 @@ import com.wolfhack.vetoptim.common.dto.TaskDTO;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Task> getTaskById(@PathVariable Long id) {
+    public Optional<Task> getTaskById(@PathVariable("id") Long id) {
         return taskService.getTaskById(id);
     }
 
@@ -32,27 +33,28 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody TaskDTO taskDTO) {
+    public Task updateTask(@PathVariable("id") Long id, @RequestBody TaskDTO taskDTO) {
         return taskService.updateTask(id, taskDTO);
     }
 
     @PutMapping("/{id}/complete")
-    public Task completeTask(@PathVariable Long id) {
+    public Task completeTask(@PathVariable("id") Long id) {
 	    return taskService.completeTask(id);
     }
 
     @PutMapping("/{id}/fail")
-    public Task failTask(@PathVariable Long id) {
+    public Task failTask(@PathVariable("id") Long id) {
 	    return taskService.failTask(id);
     }
 
     @PutMapping("/{id}/escalate")
-    public Task escalateTask(@PathVariable Long id) {
+    public Task escalateTask(@PathVariable("id") Long id) {
 	    return taskService.escalateTask(id);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable("id") Long id) {
         taskService.deleteTask(id);
     }
 }

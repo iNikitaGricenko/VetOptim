@@ -4,18 +4,18 @@ import com.wolfhack.vetoptim.taskresource.model.Staff;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.StaffRepository;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class WorkloadBalancingServiceTest {
 
     @Mock
@@ -27,35 +27,41 @@ class WorkloadBalancingServiceTest {
     @InjectMocks
     private WorkloadBalancingService workloadBalancingService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
-    void testBalanceWorkloadAndAssignTask_Success() {
+    void balanceWorkloadAndAssignTask_Success() {
         Task task = new Task();
-        Staff staff = new Staff();
+        task.setId(1L);
 
-        when(staffRepository.findAvailableStaffSortedByWorkload()).thenReturn(List.of(staff));
+        Staff staff = new Staff();
+        staff.setId(1L);
+        staff.setAvailable(true);
+
+        List<Staff> availableStaff = List.of(staff);
+
+        when(staffRepository.findAvailableStaffSortedByWorkload()).thenReturn(availableStaff);
+        when(taskRepository.save(task)).thenReturn(task);
 
         workloadBalancingService.balanceWorkloadAndAssignTask(task);
 
-        verify(staffRepository).findAvailableStaffSortedByWorkload();
         verify(taskRepository).save(task);
         verify(staffRepository).save(staff);
         assertEquals(staff, task.getAssignedStaff());
+        assertFalse(staff.isAvailable());
     }
 
     @Test
-    void testBalanceWorkloadAndAssignTask_NoAvailableStaff() {
+    void balanceWorkloadAndAssignTask_NoStaffAvailable() {
         Task task = new Task();
+        task.setId(1L);
 
         when(staffRepository.findAvailableStaffSortedByWorkload()).thenReturn(List.of());
 
-        assertThrows(RuntimeException.class, () -> workloadBalancingService.balanceWorkloadAndAssignTask(task));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            workloadBalancingService.balanceWorkloadAndAssignTask(task);
+        });
 
-        verify(staffRepository).findAvailableStaffSortedByWorkload();
-        verify(taskRepository, never()).save(any());
+        assertEquals("No available staff to assign the task.", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+        verify(staffRepository, never()).save(any(Staff.class));
     }
 }

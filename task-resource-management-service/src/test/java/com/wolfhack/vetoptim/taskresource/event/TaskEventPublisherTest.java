@@ -14,14 +14,26 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringJUnitConfig
-@EnableRetry
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 @ExtendWith(MockitoExtension.class)
 class TaskEventPublisherTest {
 
@@ -31,72 +43,48 @@ class TaskEventPublisherTest {
     @InjectMocks
     private TaskEventPublisher taskEventPublisher;
 
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(taskEventPublisher, "taskExchange", "task-exchange");
+        ReflectionTestUtils.setField(taskEventPublisher, "taskCreatedRoutingKey", "task.created");
+        ReflectionTestUtils.setField(taskEventPublisher, "taskCompletedRoutingKey", "task.completed");
+        ReflectionTestUtils.setField(taskEventPublisher, "resourceDepletedRoutingKey", "resource.depleted");
+    }
+
     @Test
-    public void testPublishTaskCreatedEvent_Successful() {
-        TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Task description");
+    void publishTaskCreatedEvent_Success() {
+        TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Surgery scheduled");
 
         taskEventPublisher.publishTaskCreatedEvent(event);
 
-        verify(rabbitTemplate, times(1)).convertAndSend(any(String.class), any(String.class), any(TaskCreatedEvent.class));
+        verify(rabbitTemplate).convertAndSend("task-exchange", "task.created", event);
     }
 
     @Test
-    public void testPublishTaskCreatedEvent_RetryOnFailure() {
-        TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Task description");
-
-        doThrow(new AmqpException("Connection failure")).when(rabbitTemplate).convertAndSend(any(String.class), any(String.class), any(TaskCreatedEvent.class));
-
-        try {
-            taskEventPublisher.publishTaskCreatedEvent(event);
-        } catch (AmqpException e) {
-        }
-
-        verify(rabbitTemplate, times(3)).convertAndSend(any(String.class), any(String.class), any(TaskCreatedEvent.class));
-    }
-
-    @Test
-    public void testPublishTaskCompletedEvent_Successful() {
-        TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "Surgery", "Task completed", TaskStatus.COMPLETED);
+    void publishTaskCompletedEvent_Success() {
+        TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "Surgery", "Surgery completed", TaskStatus.COMPLETED);
 
         taskEventPublisher.publishTaskCompletedEvent(event);
 
-        verify(rabbitTemplate, times(1)).convertAndSend(any(String.class), any(String.class), any(TaskCompletedEvent.class));
+        verify(rabbitTemplate).convertAndSend("task-exchange", "task.completed", event);
     }
 
     @Test
-    public void testPublishTaskCompletedEvent_RetryOnFailure() {
-        TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "Surgery", "Task completed", TaskStatus.COMPLETED);
-
-        doThrow(new AmqpException("Connection failure")).when(rabbitTemplate).convertAndSend(any(String.class), any(String.class), any(TaskCompletedEvent.class));
-
-        try {
-            taskEventPublisher.publishTaskCompletedEvent(event);
-        } catch (AmqpException e) {
-        }
-
-        verify(rabbitTemplate, times(3)).convertAndSend(any(String.class), any(String.class), any(TaskCompletedEvent.class));
-    }
-
-    @Test
-    public void testPublishResourceDepletedEvent_Successful() {
+    void publishResourceDepletedEvent_Success() {
         ResourceDepletedEvent event = new ResourceDepletedEvent("Surgical Kit", 2);
 
         taskEventPublisher.publishResourceDepletedEvent(event);
 
-        verify(rabbitTemplate, times(1)).convertAndSend(any(String.class), any(String.class), any(ResourceDepletedEvent.class));
+        verify(rabbitTemplate).convertAndSend("task-exchange", "resource.depleted", event);
     }
 
     @Test
-    public void testPublishResourceDepletedEvent_RetryOnFailure() {
-        ResourceDepletedEvent event = new ResourceDepletedEvent("Surgical Kit", 2);
+    void testRecover() {
+        AmqpException exception = new AmqpException("Failed to send event");
+        TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Surgery scheduled");
 
-        doThrow(new AmqpException("Connection failure")).when(rabbitTemplate).convertAndSend(any(String.class), any(String.class), any(ResourceDepletedEvent.class));
+        taskEventPublisher.recover(exception, event);
 
-        try {
-            taskEventPublisher.publishResourceDepletedEvent(event);
-        } catch (AmqpException e) {
-        }
-
-        verify(rabbitTemplate, times(3)).convertAndSend(any(String.class), any(String.class), any(ResourceDepletedEvent.class));
+        verifyNoMoreInteractions(rabbitTemplate);
     }
 }

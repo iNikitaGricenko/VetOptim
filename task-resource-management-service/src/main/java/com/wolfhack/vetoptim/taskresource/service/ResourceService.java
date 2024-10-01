@@ -1,11 +1,9 @@
 package com.wolfhack.vetoptim.taskresource.service;
 
-import com.wolfhack.vetoptim.common.dto.billing.ResourceBillingRequest;
+import com.wolfhack.vetoptim.common.dto.ResourceDTO;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
 import com.wolfhack.vetoptim.taskresource.mapper.ResourceMapper;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
-import com.wolfhack.vetoptim.common.dto.ResourceDTO;
-import com.wolfhack.vetoptim.taskresource.model.ResourceUsage;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;

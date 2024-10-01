@@ -5,6 +5,7 @@ import com.wolfhack.vetoptim.common.dto.ResourceDTO;
 import com.wolfhack.vetoptim.taskresource.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class ResourceController {
     }
 
     @PutMapping("/{id}")
-    public Resource updateResource(@PathVariable Long id, @RequestBody ResourceDTO resourceDTO) {
+    public Resource updateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
         log.info("Updating resource with ID: {}", id);
         Resource updatedResource = resourceService.updateResource(id, resourceDTO);
         log.info("Resource updated with ID: {}", updatedResource.getId());
@@ -40,7 +41,7 @@ public class ResourceController {
     }
 
     @PatchMapping("/{id}")
-    public Resource partialUpdateResource(@PathVariable Long id, @RequestBody ResourceDTO resourceDTO) {
+    public Resource partialUpdateResource(@PathVariable("id") Long id, @RequestBody ResourceDTO resourceDTO) {
         log.info("Partially updating resource with ID: {}", id);
         Resource updatedResource = resourceService.partialUpdateResource(id, resourceDTO);
         log.info("Resource partially updated with ID: {}", updatedResource.getId());
@@ -48,7 +49,8 @@ public class ResourceController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteResource(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteResource(@PathVariable("id") Long id) {
         log.info("Deleting resource with ID: {}", id);
         resourceService.deleteResource(id);
         log.info("Resource deleted with ID: {}", id);
