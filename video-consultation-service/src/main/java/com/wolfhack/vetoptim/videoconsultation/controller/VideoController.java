@@ -18,19 +18,19 @@ public class VideoController {
 	private final VideoService videoService;
 
 	@PostMapping("/start")
-	public ResponseEntity<VideoSession> startSession(@RequestParam Long vetId, @RequestParam Long ownerId) {
+	public ResponseEntity<VideoSession> startSession(@RequestParam("vetId") Long vetId, @RequestParam("ownerId") Long ownerId) {
 		VideoSession session = videoService.startSession(vetId, ownerId);
 		return ResponseEntity.ok(session);
 	}
 
 	@PostMapping("/end")
-	public ResponseEntity<Void> endSession(@RequestParam String sessionId) {
+	public ResponseEntity<Void> endSession(@RequestParam("sessionId") String sessionId) {
 		videoService.endSession(sessionId);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/record")
-	public ResponseEntity<String> uploadRecording(@RequestParam String sessionId, @RequestPart("file") MultipartFile file) throws IOException {
+	public ResponseEntity<String> uploadRecording(@RequestParam("sessionId") String sessionId, @RequestPart("file") MultipartFile file) throws IOException {
 		File tempFile = File.createTempFile("upload-", file.getOriginalFilename());
 		file.transferTo(tempFile);
 		String fileUrl = videoService.storeRecording(sessionId, tempFile);
@@ -38,7 +38,7 @@ public class VideoController {
 	}
 
 	@GetMapping("/{sessionId}/recording")
-	public ResponseEntity<String> getVideoRecording(@PathVariable String sessionId) {
+	public ResponseEntity<String> getVideoRecording(@PathVariable("sessionId") String sessionId) {
 		String videoUrl = videoService.getVideoRecording(sessionId);
 		return ResponseEntity.ok(videoUrl);
 	}

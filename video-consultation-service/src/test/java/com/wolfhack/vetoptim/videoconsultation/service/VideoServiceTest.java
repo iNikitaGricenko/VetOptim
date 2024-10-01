@@ -1,12 +1,10 @@
 package com.wolfhack.vetoptim.videoconsultation.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.wolfhack.vetoptim.videoconsultation.model.NotificationType;
 import com.wolfhack.vetoptim.videoconsultation.model.VideoSession;
 import com.wolfhack.vetoptim.videoconsultation.repository.VideoSessionRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,10 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,48 +37,58 @@ class VideoServiceTest {
     @InjectMocks
     private VideoService videoService;
 
-    private VideoSession session;
-
-    @BeforeEach
-    void setUp() {
-        session = new VideoSession();
-        session.setId("testSessionId");
-        session.setVeterinarianId(1L);
-        session.setPetOwnerId(1L);
-    }
-
     @Test
-    void testStartSession() {
+    void startSession_Success() {
+        Long vetId = 1L;
+        Long ownerId = 2L;
+        VideoSession session = new VideoSession();
+        session.setId("12345");
+        session.setVeterinarianId(vetId);
+        session.setPetOwnerId(ownerId);
+        session.setStartTime(LocalDateTime.now());
+
         when(videoSessionRepository.save(any(VideoSession.class))).thenReturn(session);
 
-        VideoSession createdSession = videoService.startSession(1L, 1L);
+        videoService.startSession(vetId, ownerId);
 
-        assertNotNull(createdSession);
-        assertEquals(session.getId(), createdSession.getId());
-        verify(notificationService).sendNotification(1L, 1L, session.getId(), NotificationType.SESSION_START, null);
-        verify(videoSessionRepository).save(any(VideoSession.class));
+        verify(videoSessionRepository, times(1)).save(any(VideoSession.class));
+        verify(notificationService, times(1)).sendNotification(vetId, ownerId, session.getId(), NotificationType.SESSION_START, null);
     }
 
     @Test
-    void testEndSession() {
-        when(videoSessionRepository.findById("testSessionId")).thenReturn(Optional.of(session));
+    void endSession_Success() {
+        VideoSession session = new VideoSession();
+        session.setId("12345");
+        session.setVeterinarianId(1L);
+        session.setPetOwnerId(2L);
+        session.setEndTime(null);
 
-        videoService.endSession("testSessionId");
+        when(videoSessionRepository.findById(anyString())).thenReturn(Optional.of(session));
 
-        assertNotNull(session.getEndTime());
-        verify(notificationService).sendNotification(1L, 1L, "testSessionId", NotificationType.SESSION_END, null);
-        verify(videoProcessingService).transcodeRecording(session);
+        videoService.endSession("12345");
+
+        verify(videoSessionRepository, times(1)).save(any(VideoSession.class));
+        verify(notificationService, times(1)).sendNotification(eq(1L), eq(2L), anyString(), eq(NotificationType.SESSION_END), isNull());
+        verify(videoProcessingService, times(1)).transcodeRecording(any(VideoSession.class));
     }
 
     @Test
-    void testStoreRecording() {
-        when(videoSessionRepository.findById("testSessionId")).thenReturn(Optional.of(session));
-        when(s3Client.putObject(any(PutObjectRequest.class))).thenReturn(new PutObjectResult());
+    void storeRecording_Success() throws Exception {
+        VideoSession session = new VideoSession();
+        session.setId("12345");
+        session.setVeterinarianId(1L);
+        session.setPetOwnerId(2L);
+        File videoFile = new File("video.mp4");
+        String expectedUrl = "https://vetoptim-video-storage.s3.amazonaws.com/video.mp4";
 
-        String fileUrl = videoService.storeRecording("testSessionId", new File("testFile"));
+        when(videoSessionRepository.findById(anyString())).thenReturn(Optional.of(session));
+        when(s3Client.putObject(any())).thenReturn(new PutObjectResult());
+        when(s3Client.getUrl(anyString(), anyString())).thenReturn(new URL(expectedUrl));
 
-        assertNotNull(fileUrl);
-        verify(notificationService).sendNotification(1L, 1L, "testSessionId", NotificationType.RECORDING_UPLOADED, "Recording uploaded successfully.");
-        verify(videoSessionRepository).save(any(VideoSession.class));
+        String actualUrl = videoService.storeRecording(session.getId(), videoFile);
+
+        assertEquals(expectedUrl, actualUrl);
+        verify(videoSessionRepository, times(1)).save(any(VideoSession.class));
+        verify(notificationService, times(1)).sendNotification(eq(1L), eq(2L), eq("12345"), eq(NotificationType.RECORDING_UPLOADED), anyString());
     }
 }

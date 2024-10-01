@@ -9,12 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VideoWebSocketHandlerTest {
@@ -22,56 +20,66 @@ class VideoWebSocketHandlerTest {
     @Mock
     private VideoService videoService;
 
+    @Mock
+    private WebSocketSession session;
+
     @InjectMocks
     private VideoWebSocketHandler videoWebSocketHandler;
 
-    @Mock
-    private WebSocketSession webSocketSession;
-
-    private WebRTCSignal signal;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        signal = new WebRTCSignal();
+        objectMapper = new ObjectMapper();
+    }
+
+    @Test
+    void afterConnectionEstablished_shouldPutSessionInMap() throws Exception {
+        when(session.getId()).thenReturn("12345");
+
+        videoWebSocketHandler.afterConnectionEstablished(session);
+
+        verify(session, times(1)).getId();
+    }
+
+    @Test
+    void handleTextMessage_startSignal_shouldInvokeStartSession() throws Exception {
+        WebRTCSignal signal = new WebRTCSignal();
         signal.setType("start");
         signal.setVetId(1L);
-        signal.setOwnerId(1L);
+        signal.setOwnerId(2L);
+
+        String signalPayload = objectMapper.writeValueAsString(signal);
+        TextMessage message = new TextMessage(signalPayload);
+
+        videoWebSocketHandler.handleTextMessage(session, message);
+
+        verify(videoService, times(1)).startSession(1L, 2L);
     }
 
     @Test
-    void testHandleTextMessage_startSignal() throws Exception {
-        when(webSocketSession.getId()).thenReturn("testSessionId");
-
-        videoWebSocketHandler.handleTextMessage(webSocketSession, new TextMessage(new ObjectMapper().writeValueAsString(signal)));
-
-        verify(videoService).startSession(1L, 1L);
-    }
-
-    @Test
-    void testHandleTextMessage_endSignal() throws Exception {
+    void handleTextMessage_endSignal_shouldInvokeEndSession() throws Exception {
+        WebRTCSignal signal = new WebRTCSignal();
         signal.setType("end");
-        signal.setSessionId("testSessionId");
+        signal.setSessionId("12345");
 
-        videoWebSocketHandler.handleTextMessage(webSocketSession, new TextMessage(new ObjectMapper().writeValueAsString(signal)));
+        String signalPayload = objectMapper.writeValueAsString(signal);
+        TextMessage message = new TextMessage(signalPayload);
 
-        verify(videoService).endSession("testSessionId");
+        videoWebSocketHandler.handleTextMessage(session, message);
+
+        verify(videoService, times(1)).endSession("12345");
     }
 
     @Test
-    void testAfterConnectionEstablished() throws Exception {
-        when(webSocketSession.getId()).thenReturn("testSessionId");
+    void afterConnectionClosed_shouldRemoveSessionFromMapAndEndSession() throws Exception {
+        when(session.getId()).thenReturn("12345");
 
-        videoWebSocketHandler.afterConnectionEstablished(webSocketSession);
+        videoWebSocketHandler.afterConnectionEstablished(session);
 
-        verify(webSocketSession).getId();
-    }
+        videoWebSocketHandler.afterConnectionClosed(session, null);
 
-    @Test
-    void testAfterConnectionClosed() throws Exception {
-        when(webSocketSession.getId()).thenReturn("testSessionId");
-
-        videoWebSocketHandler.afterConnectionClosed(webSocketSession, CloseStatus.NORMAL);
-
-        verify(videoService).endSession("testSessionId");
+        verify(videoService, times(1)).endSession("12345");
+        verify(session, times(1)).close();
     }
 }

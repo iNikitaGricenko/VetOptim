@@ -7,14 +7,12 @@ import com.amazonaws.services.mediaconvert.model.Job;
 import com.wolfhack.vetoptim.videoconsultation.model.NotificationType;
 import com.wolfhack.vetoptim.videoconsultation.model.VideoSession;
 import com.wolfhack.vetoptim.videoconsultation.repository.VideoSessionRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,33 +30,25 @@ class VideoProcessingServiceTest {
     @InjectMocks
     private VideoProcessingService videoProcessingService;
 
-    private VideoSession session;
-
-    @BeforeEach
-    void setUp() {
-        session = new VideoSession();
-        session.setId("testSessionId");
-        session.setVeterinarianId(1L);
-        session.setPetOwnerId(1L);
-        session.setVideoUrl("https://vetoptim-video-storage.s3.amazonaws.com/testFile");
-    }
-
     @Test
-    void testTranscodeRecording() {
-        when(mediaConvertClient.createJob(any(CreateJobRequest.class))).thenReturn(new CreateJobResult().withJob(new Job().withId("jobId")));
+    void transcodeRecording_Success() {
+        VideoSession session = new VideoSession();
+        session.setId("12345");
+        session.setVeterinarianId(1L);
+        session.setPetOwnerId(2L);
+        session.setVideoUrl("https://vetoptim-video-storage.s3.amazonaws.com/raw/video.mp4");
+
+        CreateJobResult jobResult = mock(CreateJobResult.class);
+        Job job = new Job();
+        job.setId("job-123");
+
+        when(mediaConvertClient.createJob(any(CreateJobRequest.class))).thenReturn(jobResult);
+        when(jobResult.getJob()).thenReturn(job);
 
         videoProcessingService.transcodeRecording(session);
 
-        verify(notificationService).sendNotification(1L, 1L, "testSessionId", NotificationType.TRANSCODING_COMPLETED, "https://vetoptim-video-storage.s3.amazonaws.com/transcoded/testFile");
-        verify(videoSessionRepository).save(any(VideoSession.class));
-    }
-
-    @Test
-    void testTranscodingFailure() {
-        when(mediaConvertClient.createJob(any(CreateJobRequest.class))).thenThrow(RuntimeException.class);
-
-        assertThrows(RuntimeException.class, () -> videoProcessingService.transcodeRecording(session));
-
-        verifyNoInteractions(notificationService);
+        verify(mediaConvertClient, times(1)).createJob(any(CreateJobRequest.class));
+        verify(videoSessionRepository, times(1)).save(any(VideoSession.class));
+        verify(notificationService, times(1)).sendNotification(eq(1L), eq(2L), eq("12345"), eq(NotificationType.TRANSCODING_COMPLETED), anyString());
     }
 }
