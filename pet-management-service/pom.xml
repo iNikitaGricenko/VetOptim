@@ -15,6 +15,11 @@
     <packaging>jar</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
         <!-- Common module for DTOs and Events -->
         <dependency>
             <groupId>com.wolfhack.vetoptim</groupId>
