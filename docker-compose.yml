@@ -53,11 +53,11 @@ services:
     image: postgres:13
     container_name: postgres-task
     environment:
-      POSTGRES_DB: task_management_db
+      POSTGRES_DB: task_resource_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
       - task-data:/var/lib/postgresql/data
     networks:

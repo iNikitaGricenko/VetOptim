@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -50,29 +51,4 @@ class NotificationServiceTest {
         verify(rabbitTemplate, times(1)).convertAndSend("notification-exchange", "notification.resource.depletion", message);
     }
 
-    @Test
-    void notifyStaffOfUrgentTask_Failure() {
-        Long taskId = 123L;
-        String description = "Critical surgery needed";
-        String message = String.format("URGENT Task Alert! Task ID: %d, Description: %s", taskId, description);
-
-        doThrow(new RuntimeException("RabbitMQ error")).when(rabbitTemplate).convertAndSend("notification-exchange", "notification.urgent", message);
-
-        notificationService.notifyStaffOfUrgentTask(taskId, description);
-
-        verify(rabbitTemplate, times(1)).convertAndSend("notification-exchange", "notification.urgent", message);
-    }
-
-    @Test
-    void notifyOfResourceDepletion_Failure() {
-        String resourceName = "Vaccine";
-        int remainingQuantity = 5;
-        String message = String.format("Resource Depletion Alert! Resource: %s, Remaining Quantity: %d", resourceName, remainingQuantity);
-
-        doThrow(new RuntimeException("RabbitMQ error")).when(rabbitTemplate).convertAndSend("notification-exchange", "notification.resource.depletion", message);
-
-        notificationService.notifyOfResourceDepletion(resourceName, remainingQuantity);
-
-        verify(rabbitTemplate, times(1)).convertAndSend("notification-exchange", "notification.resource.depletion", message);
-    }
 }

@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TaskScheduler {
+public class TasksScheduler {
 
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
