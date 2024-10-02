@@ -15,6 +15,4 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.invoice.ownerId = :ownerId")
     List<Payment> findByOwnerId(@Param("ownerId") Long ownerId, Pageable pageable);
 
-	List<Payment> findPaymentsByInvoiceOwnerId(Long ownerId, Pageable pageable);
-
 }
