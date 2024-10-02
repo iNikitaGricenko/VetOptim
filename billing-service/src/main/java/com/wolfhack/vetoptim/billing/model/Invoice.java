@@ -2,7 +2,10 @@ package com.wolfhack.vetoptim.billing.model;
 
 import com.wolfhack.vetoptim.common.InvoiceStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.math.BigDecimal;

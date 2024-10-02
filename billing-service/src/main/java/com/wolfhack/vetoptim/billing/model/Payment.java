@@ -18,23 +18,23 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 public class Payment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private String paymentId;
-    private LocalDate paymentDate;
-    private BigDecimal amountPaid;
+	private String paymentId;
+	private LocalDate paymentDate;
+	private BigDecimal amountPaid;
 
-    @Enumerated(EnumType.STRING)
-    private PaymentStatus paymentStatus;
+	@Enumerated(EnumType.STRING)
+	private PaymentStatus paymentStatus;
 
-    private String method;
+	private String method;
 
-    @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id")
-    private Invoice invoice;
+	@ToString.Exclude
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "invoice_id")
+	private Invoice invoice;
 
 	@Override
 	public final boolean equals(Object o) {

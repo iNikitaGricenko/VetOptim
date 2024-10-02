@@ -1,6 +1,7 @@
 package com.wolfhack.vetoptim.billing.service;
 
-import com.wolfhack.vetoptim.billing.model.*;
+import com.wolfhack.vetoptim.billing.model.Invoice;
+import com.wolfhack.vetoptim.billing.model.Payment;
 import com.wolfhack.vetoptim.common.InvoiceStatus;
 import com.wolfhack.vetoptim.common.dto.billing.ResourceBillingRequest;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
