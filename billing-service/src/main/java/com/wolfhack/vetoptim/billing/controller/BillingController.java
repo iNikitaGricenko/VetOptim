@@ -6,9 +6,11 @@ import com.wolfhack.vetoptim.billing.service.BillingService;
 import com.wolfhack.vetoptim.common.InvoiceStatus;
 import com.wolfhack.vetoptim.common.dto.billing.ResourceBillingRequest;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,6 +18,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/billing")
 @RequiredArgsConstructor
@@ -32,7 +35,7 @@ public class BillingController {
     }
 
     @PostMapping("/invoice/{invoiceNumber}/payment")
-    public ResponseEntity<Payment> processPayment(@PathVariable String invoiceNumber, @RequestBody BigDecimal amountPaid) {
+    public ResponseEntity<Payment> processPayment(@PathVariable String invoiceNumber, @RequestBody @Valid BigDecimal amountPaid) {
         Payment payment = billingService.processPayment(invoiceNumber, amountPaid);
         return ResponseEntity.created(
             URI.create("/api/billing/payment/" + payment.getId())
@@ -40,13 +43,13 @@ public class BillingController {
     }
 
     @PostMapping("/task/bill")
-    public ResponseEntity<Void> billTask(@RequestBody TaskBillingRequest taskBillingRequest) {
+    public ResponseEntity<Void> billTask(@RequestBody @Valid TaskBillingRequest taskBillingRequest) {
         billingService.billTask(taskBillingRequest);
         return ResponseEntity.created(URI.create("/api/billing/task/" + taskBillingRequest.getTaskId())).build();
     }
 
     @PostMapping("/resource/bill")
-    public ResponseEntity<Void> billResource(@RequestBody ResourceBillingRequest resourceBillingRequest) {
+    public ResponseEntity<Void> billResource(@RequestBody @Valid ResourceBillingRequest resourceBillingRequest) {
         billingService.billResource(resourceBillingRequest);
         return ResponseEntity.created(URI.create("/api/billing/resource/" + resourceBillingRequest.getResourceId())).build();
     }
