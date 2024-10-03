@@ -1,5 +1,6 @@
-package com.wolfhack.vetoptim.taskresource.service;
+package com.wolfhack.vetoptim.taskresource.service.integration;
 
+import com.wolfhack.vetoptim.taskresource.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;

@@ -1,4 +1,4 @@
-package com.wolfhack.vetoptim.taskresource.service;
+package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.common.TaskType;
 import com.wolfhack.vetoptim.common.event.resource.ResourceDepletedEvent;
@@ -9,6 +9,7 @@ import com.wolfhack.vetoptim.taskresource.model.ResourceUsage;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
+import com.wolfhack.vetoptim.taskresource.service.ResourceAllocationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,8 +1,9 @@
-package com.wolfhack.vetoptim.taskresource.service;
+package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.common.ResourceType;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
+import com.wolfhack.vetoptim.taskresource.service.ResourceForecastingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

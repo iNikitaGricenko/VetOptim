@@ -27,7 +27,7 @@ public class BillingController {
     private final BillingService billingService;
 
     @PostMapping("/invoice/{ownerId}")
-    public ResponseEntity<Invoice> createInvoice(@PathVariable Long ownerId) {
+    public ResponseEntity<Invoice> createInvoice(@PathVariable("ownerId") Long ownerId) {
         Invoice invoice = billingService.createInvoice(ownerId);
         return ResponseEntity.created(
             URI.create("/api/billing/invoice/" + invoice.getInvoiceNumber())
@@ -35,7 +35,7 @@ public class BillingController {
     }
 
     @PostMapping("/invoice/{invoiceNumber}/payment")
-    public ResponseEntity<Payment> processPayment(@PathVariable String invoiceNumber, @RequestBody @Valid BigDecimal amountPaid) {
+    public ResponseEntity<Payment> processPayment(@PathVariable("invoiceNumber") String invoiceNumber, @RequestBody @Valid BigDecimal amountPaid) {
         Payment payment = billingService.processPayment(invoiceNumber, amountPaid);
         return ResponseEntity.created(
             URI.create("/api/billing/payment/" + payment.getPaymentId())
@@ -56,17 +56,17 @@ public class BillingController {
 
     @GetMapping("/invoice/history/{ownerId}")
     public ResponseEntity<List<Invoice>> getInvoiceHistory(
-        @PathVariable Long ownerId,
-        @RequestParam(required = false) InvoiceStatus status,
-        @RequestParam(required = false) LocalDate startDate,
-        @RequestParam(required = false) LocalDate endDate,
+        @PathVariable("ownerId") Long ownerId,
+        @RequestParam(name = "status", required = false) InvoiceStatus status,
+        @RequestParam(name = "startDate", required = false) LocalDate startDate,
+        @RequestParam(name = "endDate", required = false) LocalDate endDate,
         Pageable pageable) {
         List<Invoice> invoiceHistory = billingService.getInvoiceHistory(ownerId, status, startDate, endDate, pageable);
         return ResponseEntity.ok(invoiceHistory);
     }
 
     @GetMapping("/payment/history/{ownerId}")
-    public ResponseEntity<List<Payment>> getPaymentHistory(@PathVariable Long ownerId, Pageable pageable) {
+    public ResponseEntity<List<Payment>> getPaymentHistory(@PathVariable("ownerId") Long ownerId, Pageable pageable) {
         List<Payment> paymentHistory = billingService.getPaymentHistory(ownerId, pageable);
         return ResponseEntity.ok(paymentHistory);
     }

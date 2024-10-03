@@ -1,20 +1,13 @@
 package com.wolfhack.vetoptim.billing.service;
 
 import com.wolfhack.vetoptim.billing.event.BillingEventPublisher;
-import com.wolfhack.vetoptim.billing.model.ChargeableResource;
-import com.wolfhack.vetoptim.billing.model.ChargeableTask;
-import com.wolfhack.vetoptim.billing.model.Invoice;
-import com.wolfhack.vetoptim.billing.model.Payment;
-import com.wolfhack.vetoptim.billing.repository.ChargeableResourceRepository;
-import com.wolfhack.vetoptim.billing.repository.ChargeableTaskRepository;
-import com.wolfhack.vetoptim.billing.repository.InvoiceRepository;
-import com.wolfhack.vetoptim.billing.repository.PaymentRepository;
+import com.wolfhack.vetoptim.billing.model.*;
+import com.wolfhack.vetoptim.billing.repository.*;
 import com.wolfhack.vetoptim.common.InvoiceStatus;
 import com.wolfhack.vetoptim.common.PaymentStatus;
+import com.wolfhack.vetoptim.common.TaskType;
 import com.wolfhack.vetoptim.common.dto.billing.ResourceBillingRequest;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
-import com.wolfhack.vetoptim.common.event.billing.InvoiceCreatedEvent;
-import com.wolfhack.vetoptim.common.event.billing.PaymentProcessedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +38,12 @@ class BillingServiceImplTest {
 
 	@Mock
 	private ChargeableTaskRepository chargeableTaskRepository;
+
+	@Mock
+	private TaskCostRepository taskCostRepository;
+
+	@Mock
+	private ResourceCostRepository resourceCostRepository;
 
 	@Mock
 	private ChargeableResourceRepository chargeableResourceRepository;
@@ -79,6 +78,7 @@ class BillingServiceImplTest {
 		taskBillingRequest.setTaskId(1L);
 		taskBillingRequest.setTaskDescription("Surgery");
 		taskBillingRequest.setPetId(1L);
+		taskBillingRequest.setTaskType(TaskType.SURGERY);
 		taskBillingRequest.setResourcesUsed(Collections.emptyList());
 
 		resourceBillingRequest = new ResourceBillingRequest();
@@ -124,18 +124,36 @@ class BillingServiceImplTest {
 
 	@Test
 	void billTask_NewInvoiceCreated() {
+		when(taskCostRepository.findByTaskType(TaskType.SURGERY))
+			.thenReturn(Optional.of(new TaskCost(1L, TaskType.SURGERY, BigDecimal.valueOf(500))));
+
 		when(invoiceRepository.findByOwnerId(anyLong())).thenReturn(Optional.empty());
-		when(chargeableTaskRepository.save(any(ChargeableTask.class))).thenReturn(new ChargeableTask());
-		when(invoiceRepository.save(any(Invoice.class))).thenReturn(new Invoice());
+
+		Invoice newInvoice = new Invoice();
+		newInvoice.setInvoiceNumber(UUID.randomUUID().toString());
+		newInvoice.setOwnerId(1L);
+		newInvoice.setTotalAmount(BigDecimal.ZERO); // Initially zero
+
+		when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> {
+			Invoice savedInvoice = invocation.getArgument(0);
+			newInvoice.setTotalAmount(savedInvoice.getTotalAmount());
+			return savedInvoice; // Return the updated invoice
+		});
 
 		billingService.billTask(taskBillingRequest);
 
-		verify(invoiceRepository, times(2)).save(any(Invoice.class));
+		verify(invoiceRepository, times(2)).save(any(Invoice.class)); // Invoice saved twice
 		verify(chargeableTaskRepository).save(any(ChargeableTask.class));
+
+		assertEquals(BigDecimal.valueOf(500), newInvoice.getTotalAmount());
 	}
+
 
 	@Test
 	void billTask_ExistingInvoice() {
+		when(taskCostRepository.findByTaskType(TaskType.SURGERY))
+			.thenReturn(Optional.of(new TaskCost(1L, TaskType.SURGERY, BigDecimal.valueOf(500))));
+
 		when(invoiceRepository.findByOwnerId(anyLong())).thenReturn(Optional.of(invoice));
 		when(chargeableTaskRepository.save(any(ChargeableTask.class))).thenReturn(new ChargeableTask());
 
@@ -143,22 +161,31 @@ class BillingServiceImplTest {
 
 		verify(invoiceRepository, times(1)).save(any(Invoice.class));
 		verify(chargeableTaskRepository).save(any(ChargeableTask.class));
+
+		assertEquals(BigDecimal.valueOf(600), invoice.getTotalAmount());
 	}
 
 	@Test
 	void billResource_NewInvoiceCreated() {
+		when(resourceCostRepository.findByResourceId(anyLong()))
+			.thenReturn(Optional.of(new ResourceCost(1L, 1L, "Vaccine", BigDecimal.valueOf(50))));
+
 		when(invoiceRepository.findByOwnerId(anyLong())).thenReturn(Optional.empty());
 		when(chargeableResourceRepository.save(any(ChargeableResource.class))).thenReturn(new ChargeableResource());
-		when(invoiceRepository.save(any(Invoice.class))).thenReturn(new Invoice());
+		when(invoiceRepository.save(any(Invoice.class))).thenReturn(invoice);
 
 		billingService.billResource(resourceBillingRequest);
 
 		verify(invoiceRepository, times(2)).save(any(Invoice.class));
 		verify(chargeableResourceRepository).save(any(ChargeableResource.class));
+		assertEquals(invoice.getTotalAmount(), BigDecimal.valueOf(100));
 	}
 
 	@Test
 	void billResource_ExistingInvoice() {
+		when(resourceCostRepository.findByResourceId(anyLong()))
+			.thenReturn(Optional.of(new ResourceCost(1L, 1L, "Vaccine", BigDecimal.valueOf(50))));
+
 		when(invoiceRepository.findByOwnerId(anyLong())).thenReturn(Optional.of(invoice));
 		when(chargeableResourceRepository.save(any(ChargeableResource.class))).thenReturn(new ChargeableResource());
 
@@ -166,6 +193,7 @@ class BillingServiceImplTest {
 
 		verify(invoiceRepository, times(1)).save(any(Invoice.class));
 		verify(chargeableResourceRepository).save(any(ChargeableResource.class));
+		assertEquals(invoice.getTotalAmount(), BigDecimal.valueOf(200));
 	}
 
 	@Test
@@ -188,5 +216,29 @@ class BillingServiceImplTest {
 
 		assertFalse(paymentHistory.isEmpty());
 		verify(paymentRepository).findByOwnerId(anyLong(), any(Pageable.class));
+	}
+
+	@Test
+	void billTask_NoCostFound() {
+		when(taskCostRepository.findByTaskType(TaskType.SURGERY))
+			.thenReturn(Optional.empty());
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			billingService.billTask(taskBillingRequest);
+		});
+
+		assertEquals("Cost not found for task type: SURGERY", exception.getMessage());
+	}
+
+	@Test
+	void billResource_NoCostFound() {
+		when(resourceCostRepository.findByResourceId(anyLong()))
+			.thenReturn(Optional.empty());
+
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			billingService.billResource(resourceBillingRequest);
+		});
+
+		assertEquals("Cost not found for resource ID: 1", exception.getMessage());
 	}
 }

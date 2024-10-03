@@ -3,16 +3,11 @@ package com.wolfhack.vetoptim.billing.service;
 import com.wolfhack.vetoptim.billing.client.OwnerClient;
 import com.wolfhack.vetoptim.billing.client.TaskClient;
 import com.wolfhack.vetoptim.billing.event.BillingEventPublisher;
-import com.wolfhack.vetoptim.billing.model.ChargeableResource;
-import com.wolfhack.vetoptim.billing.model.ChargeableTask;
-import com.wolfhack.vetoptim.billing.model.Invoice;
-import com.wolfhack.vetoptim.billing.model.Payment;
-import com.wolfhack.vetoptim.billing.repository.ChargeableResourceRepository;
-import com.wolfhack.vetoptim.billing.repository.ChargeableTaskRepository;
-import com.wolfhack.vetoptim.billing.repository.InvoiceRepository;
-import com.wolfhack.vetoptim.billing.repository.PaymentRepository;
+import com.wolfhack.vetoptim.billing.model.*;
+import com.wolfhack.vetoptim.billing.repository.*;
 import com.wolfhack.vetoptim.common.InvoiceStatus;
 import com.wolfhack.vetoptim.common.PaymentStatus;
+import com.wolfhack.vetoptim.common.dto.ResourceUsageDTO;
 import com.wolfhack.vetoptim.common.dto.billing.ResourceBillingRequest;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
 import com.wolfhack.vetoptim.common.event.billing.InvoiceCreatedEvent;
@@ -37,9 +32,13 @@ public class BillingServiceImpl implements BillingService {
     private final PaymentRepository paymentRepository;
     private final ChargeableTaskRepository chargeableTaskRepository;
     private final ChargeableResourceRepository chargeableResourceRepository;
-    private final BillingEventPublisher billingEventPublisher;
+    private final TaskCostRepository taskCostRepository;
+    private final ResourceCostRepository resourceCostRepository;
+
     private final OwnerClient ownerClient;
     private final TaskClient taskClient;
+
+    private final BillingEventPublisher billingEventPublisher;
 
     @Override
     @Transactional
@@ -115,11 +114,7 @@ public class BillingServiceImpl implements BillingService {
         chargeableTask.setTaskCost(calculateTaskCost(taskBillingRequest));
 
         Invoice invoice = invoiceRepository.findByOwnerId(taskBillingRequest.getPetId())
-            .orElseGet(() -> {
-                Invoice newInvoice = createInvoice(taskBillingRequest.getPetId());
-                newInvoice.setTotalAmount(chargeableTask.getTaskCost());
-                return newInvoice;
-            });
+            .orElseGet(() -> createInvoice(taskBillingRequest.getPetId()));
 
         chargeableTask.setInvoice(invoice);
         chargeableTaskRepository.save(chargeableTask);
@@ -136,19 +131,17 @@ public class BillingServiceImpl implements BillingService {
         ChargeableResource chargeableResource = new ChargeableResource();
         chargeableResource.setResourceId(resourceBillingRequest.getResourceId());
         chargeableResource.setResourceType(resourceBillingRequest.getResourceName());
-        chargeableResource.setResourceCost(calculateResourceCost(resourceBillingRequest));
+
+        BigDecimal totalResourceCost = calculateResourceCost(resourceBillingRequest);
+        chargeableResource.setResourceCost(totalResourceCost);
 
         Invoice invoice = invoiceRepository.findByOwnerId(resourceBillingRequest.getTaskId())
-            .orElseGet(() -> {
-                Invoice newInvoice = createInvoice(resourceBillingRequest.getTaskId());
-                newInvoice.setTotalAmount(chargeableResource.getResourceCost());
-                return newInvoice;
-            });
+            .orElseGet(() -> createInvoice(resourceBillingRequest.getTaskId()));
 
         chargeableResource.setInvoice(invoice);
         chargeableResourceRepository.save(chargeableResource);
 
-        invoice.setTotalAmount(invoice.getTotalAmount().add(chargeableResource.getResourceCost()));
+        invoice.setTotalAmount(invoice.getTotalAmount().add(totalResourceCost));
         invoiceRepository.save(invoice);
 
         log.info("Billed resource {} for invoice {}", resourceBillingRequest.getResourceId(), invoice.getInvoiceNumber());
@@ -183,17 +176,24 @@ public class BillingServiceImpl implements BillingService {
     }
 
     private BigDecimal calculateTaskCost(TaskBillingRequest taskBillingRequest) {
-        return taskBillingRequest.getResourcesUsed().stream()
-            .map(resource -> chargeableTaskRepository.findByTaskId(taskBillingRequest.getTaskId())
-                .map(ChargeableTask::getTaskCost)
-                .orElse(BigDecimal.ZERO))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal taskCost = taskCostRepository.findByTaskType(taskBillingRequest.getTaskType())
+            .map(TaskCost::getCost)
+            .orElseThrow(() -> new IllegalArgumentException("Cost not found for task type: " + taskBillingRequest.getTaskType()));
+
+        for (ResourceUsageDTO resource : taskBillingRequest.getResourcesUsed()) {
+            BigDecimal resourceCost = resourceCostRepository.findByResourceId(resource.getResourceId())
+                .map(ResourceCost::getCost)
+                .orElseThrow(() -> new IllegalArgumentException("Cost not found for resource ID: " + resource.getResourceId()));
+            taskCost = taskCost.add(resourceCost.multiply(BigDecimal.valueOf(resource.getQuantityUsed())));
+        }
+
+        return taskCost;
     }
 
     private BigDecimal calculateResourceCost(ResourceBillingRequest resourceBillingRequest) {
-        return chargeableResourceRepository.findByResourceId(resourceBillingRequest.getResourceId())
-            .map(ChargeableResource::getResourceCost)
-            .orElse(BigDecimal.ZERO);
+        return resourceCostRepository.findByResourceId(resourceBillingRequest.getResourceId())
+            .map(resourceCost -> resourceCost.getCost().multiply(BigDecimal.valueOf(resourceBillingRequest.getQuantityUsed())))
+            .orElseThrow(() -> new IllegalArgumentException("Cost not found for resource ID: " + resourceBillingRequest.getResourceId()));
     }
 
     private void publishInvoiceCreatedEvent(Invoice invoice) {

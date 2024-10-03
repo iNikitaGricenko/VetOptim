@@ -1,9 +1,10 @@
-package com.wolfhack.vetoptim.taskresource.scheduler;
+package com.wolfhack.vetoptim.taskresource.scheduler.integration;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.TaskRepository;
+import com.wolfhack.vetoptim.taskresource.scheduler.TasksScheduler;
 import com.wolfhack.vetoptim.taskresource.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

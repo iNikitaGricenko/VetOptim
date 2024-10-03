@@ -1,4 +1,4 @@
-package com.wolfhack.vetoptim.taskresource.controller;
+package com.wolfhack.vetoptim.taskresource.controller.integration;
 
 import com.wolfhack.vetoptim.common.ResourceType;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
