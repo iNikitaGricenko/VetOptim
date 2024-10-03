@@ -38,7 +38,7 @@ public class BillingController {
     public ResponseEntity<Payment> processPayment(@PathVariable String invoiceNumber, @RequestBody @Valid BigDecimal amountPaid) {
         Payment payment = billingService.processPayment(invoiceNumber, amountPaid);
         return ResponseEntity.created(
-            URI.create("/api/billing/payment/" + payment.getId())
+            URI.create("/api/billing/payment/" + payment.getPaymentId())
         ).body(payment);
     }
 

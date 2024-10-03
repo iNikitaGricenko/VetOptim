@@ -115,7 +115,11 @@ public class BillingServiceImpl implements BillingService {
         chargeableTask.setTaskCost(calculateTaskCost(taskBillingRequest));
 
         Invoice invoice = invoiceRepository.findByOwnerId(taskBillingRequest.getPetId())
-            .orElseGet(() -> createInvoice(taskBillingRequest.getPetId()));
+            .orElseGet(() -> {
+                Invoice newInvoice = createInvoice(taskBillingRequest.getPetId());
+                newInvoice.setTotalAmount(chargeableTask.getTaskCost());
+                return newInvoice;
+            });
 
         chargeableTask.setInvoice(invoice);
         chargeableTaskRepository.save(chargeableTask);
@@ -135,7 +139,11 @@ public class BillingServiceImpl implements BillingService {
         chargeableResource.setResourceCost(calculateResourceCost(resourceBillingRequest));
 
         Invoice invoice = invoiceRepository.findByOwnerId(resourceBillingRequest.getTaskId())
-            .orElseGet(() -> createInvoice(resourceBillingRequest.getTaskId()));
+            .orElseGet(() -> {
+                Invoice newInvoice = createInvoice(resourceBillingRequest.getTaskId());
+                newInvoice.setTotalAmount(chargeableResource.getResourceCost());
+                return newInvoice;
+            });
 
         chargeableResource.setInvoice(invoice);
         chargeableResourceRepository.save(chargeableResource);
