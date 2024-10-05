@@ -60,7 +60,7 @@ class AppointmentControllerTest {
 
         ResponseEntity<AppointmentDTO> response = appointmentController.createAppointment(ownerId, appointmentDTO);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(appointmentDTO, response.getBody());
         verify(appointmentService, times(1)).createAppointment(ownerId, appointmentDTO);
     }
