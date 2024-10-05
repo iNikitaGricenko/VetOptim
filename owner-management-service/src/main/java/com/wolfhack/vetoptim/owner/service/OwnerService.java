@@ -6,6 +6,8 @@ import com.wolfhack.vetoptim.common.event.owner.OwnerDeletedEvent;
 import com.wolfhack.vetoptim.common.event.owner.OwnerUpdatedEvent;
 import com.wolfhack.vetoptim.owner.client.AppointmentClient;
 import com.wolfhack.vetoptim.owner.event.OwnerEventPublisher;
+import com.wolfhack.vetoptim.owner.exception.OwnerCreationException;
+import com.wolfhack.vetoptim.owner.exception.OwnerNotFoundException;
 import com.wolfhack.vetoptim.owner.mapper.OwnerMapper;
 import com.wolfhack.vetoptim.owner.model.Owner;
 import com.wolfhack.vetoptim.owner.repository.OwnerRepository;
@@ -45,14 +47,19 @@ public class OwnerService {
 	public OwnerDTO createOwner(OwnerDTO ownerDTO) {
 		log.info("Creating new owner with name: {}", ownerDTO.getName());
 
-		Owner owner = ownerMapper.toModel(ownerDTO);
-		Owner savedOwner = ownerRepository.save(owner);
+		try {
+			Owner owner = ownerMapper.toModel(ownerDTO);
+			Owner savedOwner = ownerRepository.save(owner);
 
-		OwnerCreatedEvent event = new OwnerCreatedEvent(savedOwner.getId(), savedOwner.getName(), savedOwner.getContactDetails());
-		ownerEventPublisher.publishOwnerCreatedEvent(event);
+			OwnerCreatedEvent event = new OwnerCreatedEvent(savedOwner.getId(), savedOwner.getName(), savedOwner.getContactDetails());
+			ownerEventPublisher.publishOwnerCreatedEvent(event);
 
-		log.info("Owner created with ID: {}", savedOwner.getId());
-		return ownerMapper.toDTO(savedOwner);
+			log.info("Owner created with ID: {}", savedOwner.getId());
+			return ownerMapper.toDTO(savedOwner);
+		} catch (Exception e) {
+			log.error("Failed to create owner: {}", ownerDTO.getName(), e);
+			throw new OwnerCreationException("Failed to create owner with name: " + ownerDTO.getName());
+		}
 	}
 
 	public OwnerDTO updateOwner(Long id, OwnerDTO ownerDTO) {
@@ -68,7 +75,7 @@ public class OwnerService {
 			})
 			.orElseThrow(() -> {
 				log.error("Owner not found with ID: {}", id);
-				return new RuntimeException("Owner not found");
+				return new OwnerNotFoundException(id);
 			});
 	}
 
@@ -90,12 +97,14 @@ public class OwnerService {
 
 	public void deleteOwner(Long id) {
 		log.info("Deleting owner with ID: {}", id);
-		ownerRepository.findById(id).ifPresent(owner -> {
+		ownerRepository.findById(id).ifPresentOrElse(owner -> {
 			ownerRepository.deleteById(id);
 			OwnerDeletedEvent event = new OwnerDeletedEvent(owner.getId());
 			ownerEventPublisher.publishOwnerDeletedEvent(event);
 			log.info("Owner deleted with ID: {}", owner.getId());
+		}, () -> {
+			log.error("Owner not found with ID: {}", id);
+			throw new OwnerNotFoundException(id);
 		});
 	}
-
 }

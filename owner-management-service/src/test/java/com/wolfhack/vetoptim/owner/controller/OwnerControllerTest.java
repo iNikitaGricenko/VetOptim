@@ -14,8 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 @ExtendWith(MockitoExtension.class)
 class OwnerControllerTest {
@@ -70,7 +69,7 @@ class OwnerControllerTest {
 
         ResponseEntity<OwnerDTO> response = ownerController.createOwner(ownerDTO);
 
-        assertEquals(OK, response.getStatusCode());
+        assertEquals(CREATED, response.getStatusCode());
         assertEquals(ownerDTO, response.getBody());
         verify(ownerService).createOwner(ownerDTO);
     }
