@@ -93,7 +93,7 @@ class TaskServiceIT {
         task.setDescription("Routine surgery for pet");
         task.setStatus(TaskStatus.PENDING);
 
-        when(petClient.getPetById(1L)).thenReturn(new PetDTO(1L, "Buddy", "Dog", "Labrador", 5));
+        when(petClient.getPetById(1L)).thenReturn(new PetDTO(1L, "Buddy", "Dog", "Labrador", 5, "Some history", "Bradly", 1L));
 
         doNothing().when(resourceAllocationService).allocateResourcesForTask(any(Task.class));
 
