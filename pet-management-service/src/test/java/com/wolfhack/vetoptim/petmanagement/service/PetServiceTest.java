@@ -42,7 +42,7 @@ class PetServiceTest {
     private IAppointmentTaskEventPublisher taskEventPublisher;
 
     @InjectMocks
-    private IPetService petService;
+    private PetService petService;
 
     private Pet pet;
     private PetDTO petDTO;

@@ -47,7 +47,7 @@ class MedicalRecordServiceTest {
     private MedicalRecordMapper medicalRecordMapper;
 
     @InjectMocks
-    private IMedicalRecordService medicalRecordService;
+    private MedicalRecordService medicalRecordService;
 
     private Pet pet;
     private MedicalRecord medicalRecord;

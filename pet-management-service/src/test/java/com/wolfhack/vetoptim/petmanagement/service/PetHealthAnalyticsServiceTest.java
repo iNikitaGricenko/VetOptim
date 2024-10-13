@@ -25,7 +25,7 @@ class PetHealthAnalyticsServiceTest {
     private MedicalRecordRepository medicalRecordRepository;
 
     @InjectMocks
-    private IPetHealthAnalyticsService IPetHealthAnalyticsService;
+    private PetHealthAnalyticsService IPetHealthAnalyticsService;
 
     private List<MedicalRecord> medicalRecords;
     private MedicalRecord record1;

@@ -40,7 +40,7 @@ class VaccinationServiceTest {
     private VaccinationMapper vaccinationMapper;
 
     @InjectMocks
-    private IVaccinationService IVaccinationService;
+    private VaccinationService IVaccinationService;
 
     private Pet pet;
     private Vaccination vaccination;

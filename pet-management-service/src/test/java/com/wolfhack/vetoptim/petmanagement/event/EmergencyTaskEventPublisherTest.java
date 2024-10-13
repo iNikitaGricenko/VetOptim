@@ -19,7 +19,7 @@ class EmergencyTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IEmergencyTaskEventPublisher IEmergencyTaskEventPublisher;
+    private EmergencyTaskEventPublisher IEmergencyTaskEventPublisher;
 
     @BeforeEach
     void setUp() {

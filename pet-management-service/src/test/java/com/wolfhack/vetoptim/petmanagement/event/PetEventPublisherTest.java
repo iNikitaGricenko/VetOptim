@@ -21,7 +21,7 @@ class PetEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IPetEventPublisher IPetEventPublisher;
+    private PetEventPublisher IPetEventPublisher;
 
     @BeforeEach
     void setUp() {

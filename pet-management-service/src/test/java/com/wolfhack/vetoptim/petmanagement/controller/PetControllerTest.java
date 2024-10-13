@@ -80,7 +80,7 @@ class PetControllerTest {
 
         mockMvc.perform(post("/api/pets")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Buddy\"}"))
+                .content("{\"name\": \"Buddy\", \"species\": \"test\", \"breed\": \"test\", \"age\": 3, \"ownerName\": \"Bradly\", \"ownerId\": 1}"))
             .andExpect(status().isCreated());
 
         verify(petService).createPet(any(PetDTO.class));
@@ -93,7 +93,7 @@ class PetControllerTest {
 
         mockMvc.perform(put("/api/pets/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Buddy\"}"))
+                .content("{\"name\": \"Buddy\", \"species\": \"test\", \"breed\": \"test\", \"age\": 3, \"ownerName\": \"Bradly\", \"ownerId\": 1}"))
             .andExpect(status().isOk());
 
         verify(petService).updatePet(anyLong(), any(PetDTO.class));

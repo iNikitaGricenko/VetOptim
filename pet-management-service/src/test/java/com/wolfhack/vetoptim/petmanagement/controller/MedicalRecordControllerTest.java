@@ -53,7 +53,7 @@ class MedicalRecordControllerTest {
 
         mockMvc.perform(post("/api/pets/1/medical-records")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"diagnosis\": \"test\"}"))
+                .content("{\"diagnosis\": \"test\", \"treatment\": \"test\", \"dateOfTreatment\": \"2024-04-05\", \"petId\":  1}"))
                 .andExpect(status().isCreated());
 
         verify(medicalRecordService).createMedicalRecord(anyLong(), any(MedicalRecordDTO.class));
@@ -66,7 +66,7 @@ class MedicalRecordControllerTest {
 
         mockMvc.perform(put("/api/pets/1/medical-records/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"diagnosis\": \"test\"}"))
+                .content("{\"diagnosis\": \"test\", \"treatment\": \"test\", \"dateOfTreatment\": \"2024-04-05\", \"petId\":  1}"))
                 .andExpect(status().isOk());
 
         verify(medicalRecordService).updateMedicalRecord(anyLong(), any(MedicalRecordDTO.class));

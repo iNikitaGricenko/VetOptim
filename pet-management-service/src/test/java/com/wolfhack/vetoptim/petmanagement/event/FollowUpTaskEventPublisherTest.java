@@ -19,7 +19,7 @@ class FollowUpTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IFollowUpTaskEventPublisher IFollowUpTaskEventPublisher;
+    private FollowUpTaskEventPublisher IFollowUpTaskEventPublisher;
 
     @BeforeEach
     void setUp() {

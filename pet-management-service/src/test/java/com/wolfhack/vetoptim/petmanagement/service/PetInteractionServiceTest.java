@@ -42,7 +42,7 @@ class PetInteractionServiceTest {
     private PetInteractionMapper petInteractionMapper;
 
     @InjectMocks
-    private IPetInteractionService IPetInteractionService;
+    private PetInteractionService IPetInteractionService;
 
     private PetInteractionRequestDTO requestDTO;
     private PetInteractionResponseDTO responseDTO;

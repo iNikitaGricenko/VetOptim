@@ -19,7 +19,7 @@ class MedicalTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IMedicalTaskEventPublisher IMedicalTaskEventPublisher;
+    private MedicalTaskEventPublisher IMedicalTaskEventPublisher;
 
     @BeforeEach
     void setUp() {

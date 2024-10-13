@@ -19,7 +19,7 @@ class VaccinationEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IVaccinationEventPublisher IVaccinationEventPublisher;
+    private VaccinationEventPublisher IVaccinationEventPublisher;
 
     @BeforeEach
     void setUp() {

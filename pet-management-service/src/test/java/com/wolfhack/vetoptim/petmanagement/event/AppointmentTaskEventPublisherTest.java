@@ -19,7 +19,7 @@ class AppointmentTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private IAppointmentTaskEventPublisher IAppointmentTaskEventPublisher;
+    private AppointmentTaskEventPublisher IAppointmentTaskEventPublisher;
 
     @BeforeEach
     void setUp() {
