@@ -4,9 +4,9 @@ import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
 import com.wolfhack.vetoptim.common.event.task.EmergencyTaskCreationEvent;
 import com.wolfhack.vetoptim.common.event.task.FollowUpTaskCreationEvent;
 import com.wolfhack.vetoptim.common.event.task.MedicalTaskCreationEvent;
-import com.wolfhack.vetoptim.petmanagement.event.EmergencyTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.FollowUpTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.MedicalTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IEmergencyTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IFollowUpTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IMedicalTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.exception.MedicalRecordNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.mapper.MedicalRecordMapper;
@@ -23,15 +23,17 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MedicalRecordService {
+public class MedicalRecordService implements IMedicalRecordService {
 
     private final MedicalRecordRepository medicalRecordRepository;
     private final PetRepository petRepository;
-    private final MedicalTaskEventPublisher medicalTaskEventPublisher;
-    private final EmergencyTaskEventPublisher emergencyTaskEventPublisher;
-    private final FollowUpTaskEventPublisher followUpTaskEventPublisher;
     private final MedicalRecordMapper medicalRecordMapper;
 
+    private final IMedicalTaskEventPublisher medicalTaskEventPublisher;
+    private final IEmergencyTaskEventPublisher emergencyTaskEventPublisher;
+    private final IFollowUpTaskEventPublisher followUpTaskEventPublisher;
+
+    @Override
     public List<MedicalRecordDTO> getMedicalHistoryForPet(Long petId) {
         log.info("Fetching medical history for Pet ID: {}", petId);
         return medicalRecordRepository.findAllByPetId(petId)
@@ -40,6 +42,7 @@ public class MedicalRecordService {
             .toList();
     }
 
+    @Override
     public MedicalRecordDTO createMedicalRecord(Long petId, MedicalRecordDTO medicalRecordDTO) {
         log.info("Creating medical record for Pet ID: {}", petId);
         return petRepository.findById(petId)
@@ -54,6 +57,7 @@ public class MedicalRecordService {
             .orElseThrow(() -> new PetNotFoundException(petId));
     }
 
+    @Override
     public MedicalRecord createMedicalRecordFromAppointment(Long petId, String diagnosis, String treatment) {
         return petRepository.findById(petId)
             .map(pet -> {
@@ -72,6 +76,7 @@ public class MedicalRecordService {
             .orElseThrow(() -> new PetNotFoundException(petId));
     }
 
+    @Override
     public MedicalRecordDTO updateMedicalRecord(Long recordId, MedicalRecordDTO medicalRecordDTO) {
         log.info("Updating medical record with ID: {}", recordId);
         return medicalRecordRepository.findById(recordId)
@@ -84,6 +89,7 @@ public class MedicalRecordService {
             .orElseThrow(() -> new MedicalRecordNotFoundException(recordId));
     }
 
+    @Override
     public void deleteMedicalRecord(Long recordId) {
         log.info("Deleting medical record with ID: {}", recordId);
         medicalRecordRepository.deleteById(recordId);

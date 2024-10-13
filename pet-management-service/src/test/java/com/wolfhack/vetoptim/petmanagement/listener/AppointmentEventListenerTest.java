@@ -1,8 +1,8 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,10 +17,10 @@ import static org.mockito.Mockito.*;
 class AppointmentEventListenerTest {
 
     @Mock
-    private PetService petService;
+    private IPetService petService;
 
     @Mock
-    private MedicalRecordService medicalRecordService;
+    private IMedicalRecordService medicalRecordService;
 
     @InjectMocks
     private AppointmentEventListener appointmentEventListener;

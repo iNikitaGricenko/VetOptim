@@ -19,19 +19,19 @@ class FollowUpTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private FollowUpTaskEventPublisher followUpTaskEventPublisher;
+    private IFollowUpTaskEventPublisher IFollowUpTaskEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(followUpTaskEventPublisher, "taskExchange", "task-exchange");
-        ReflectionTestUtils.setField(followUpTaskEventPublisher, "followUpTaskRoutingKey", "task.followup");
+        ReflectionTestUtils.setField(IFollowUpTaskEventPublisher, "taskExchange", "task-exchange");
+        ReflectionTestUtils.setField(IFollowUpTaskEventPublisher, "followUpTaskRoutingKey", "task.followup");
     }
 
     @Test
     void testPublishFollowUpTaskCreationEvent() {
         FollowUpTaskCreationEvent event = new FollowUpTaskCreationEvent(1L, "Buddy", "Follow-up required", "2024-01-01");
 
-        followUpTaskEventPublisher.publishFollowUpTaskCreationEvent(event);
+        IFollowUpTaskEventPublisher.publishFollowUpTaskCreationEvent(event);
 
         verify(rabbitTemplate).convertAndSend("task-exchange", "task.followup", event);
     }

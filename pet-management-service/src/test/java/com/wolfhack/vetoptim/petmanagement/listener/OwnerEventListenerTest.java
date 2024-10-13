@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.verify;
 public class OwnerEventListenerTest {
 
     @Mock
-    private PetService petService;
+    private IPetService petService;
 
     @InjectMocks
     private OwnerEventListener ownerEventListener;

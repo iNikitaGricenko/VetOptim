@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
+public class NotificationService implements INotificationService {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -24,6 +24,7 @@ public class NotificationService {
     @Value("${rabbitmq.routingKey.notification.resource.depletion}")
     private String resourceDepletionRoutingKey;
 
+    @Override
     public void notifyOwnerOfAppointment(AppointmentDTO appointment) {
         String message = String.format("Appointment scheduled for pet ID: %d with vet %s on %s.",
             appointment.getPetId(), appointment.getVeterinarianName(), appointment.getAppointmentDate());
@@ -37,6 +38,7 @@ public class NotificationService {
         }
     }
 
+    @Override
     public void notifyOfResourceDepletion(String resourceName, int remainingQuantity) {
         String message = String.format("Resource Depletion Alert: Resource %s has %d remaining.", resourceName, remainingQuantity);
         log.info("Sending resource depletion notification: {}", message);

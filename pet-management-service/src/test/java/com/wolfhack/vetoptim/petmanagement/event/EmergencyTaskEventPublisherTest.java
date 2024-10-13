@@ -19,19 +19,19 @@ class EmergencyTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private EmergencyTaskEventPublisher emergencyTaskEventPublisher;
+    private IEmergencyTaskEventPublisher IEmergencyTaskEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(emergencyTaskEventPublisher, "taskExchange", "task-exchange");
-        ReflectionTestUtils.setField(emergencyTaskEventPublisher, "emergencyTaskRoutingKey", "task.emergency");
+        ReflectionTestUtils.setField(IEmergencyTaskEventPublisher, "taskExchange", "task-exchange");
+        ReflectionTestUtils.setField(IEmergencyTaskEventPublisher, "emergencyTaskRoutingKey", "task.emergency");
     }
 
     @Test
     void testPublishEmergencyTaskCreationEvent() {
         EmergencyTaskCreationEvent event = new EmergencyTaskCreationEvent(1L, "Buddy", "Emergency condition", "Emergency surgery required");
 
-        emergencyTaskEventPublisher.publishEmergencyTaskCreationEvent(event);
+        IEmergencyTaskEventPublisher.publishEmergencyTaskCreationEvent(event);
 
         verify(rabbitTemplate).convertAndSend("task-exchange", "task.emergency", event);
     }

@@ -3,8 +3,8 @@ package com.wolfhack.vetoptim.petmanagement.service;
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.petmanagement.client.OwnerClient;
-import com.wolfhack.vetoptim.petmanagement.event.AppointmentTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.PetEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IAppointmentTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IPetEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.exception.OwnerNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.mapper.PetMapper;
@@ -36,13 +36,13 @@ class PetServiceTest {
     private OwnerClient ownerClient;
 
     @Mock
-    private PetEventPublisher petEventPublisher;
+    private IPetEventPublisher petEventPublisher;
 
     @Mock
-    private AppointmentTaskEventPublisher taskEventPublisher;
+    private IAppointmentTaskEventPublisher taskEventPublisher;
 
     @InjectMocks
-    private PetService petService;
+    private IPetService petService;
 
     private Pet pet;
     private PetDTO petDTO;

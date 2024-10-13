@@ -2,7 +2,7 @@ package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
-import com.wolfhack.vetoptim.petmanagement.service.VaccinationService;
+import com.wolfhack.vetoptim.petmanagement.service.IVaccinationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class VaccinationControllerTest {
 
     @Mock
-    private VaccinationService vaccinationService;
+    private IVaccinationService vaccinationService;
 
     @InjectMocks
     private VaccinationController vaccinationController;

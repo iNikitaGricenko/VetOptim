@@ -2,7 +2,7 @@ package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 class TaskStatusListenerTest {
 
     @Mock
-    private MedicalRecordService medicalRecordService;
+    private IMedicalRecordService medicalRecordService;
 
     @InjectMocks
     private TaskStatusListener taskStatusListener;

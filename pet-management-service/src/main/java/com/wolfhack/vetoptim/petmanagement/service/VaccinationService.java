@@ -3,7 +3,7 @@ package com.wolfhack.vetoptim.petmanagement.service;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
 import com.wolfhack.vetoptim.common.event.vaccination.VaccinationReminderEvent;
-import com.wolfhack.vetoptim.petmanagement.event.VaccinationEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IVaccinationEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.mapper.VaccinationMapper;
 import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
 import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
@@ -18,14 +18,15 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class VaccinationService {
+public class VaccinationService implements IVaccinationService {
 
     private final VaccinationRepository vaccinationRepository;
     private final PetRepository petRepository;
     private final VaccinationMapper vaccinationMapper;
 
-    private final VaccinationEventPublisher vaccinationEventPublisher;
+    private final IVaccinationEventPublisher vaccinationEventPublisher;
 
+    @Override
     public List<VaccinationResponseDTO> getVaccinationsForPet(Long petId) {
         log.info("Fetching vaccinations for Pet ID: {}", petId);
         return vaccinationRepository.findAllByPetId(petId).stream()
@@ -33,6 +34,7 @@ public class VaccinationService {
             .toList();
     }
 
+    @Override
     public VaccinationResponseDTO createVaccination(Long petId, VaccinationRequestDTO vaccinationRequestDTO) {
         log.info("Creating vaccination for Pet ID: {}", petId);
         return petRepository.findById(petId)
@@ -54,6 +56,7 @@ public class VaccinationService {
             .orElseThrow(() -> new RuntimeException("Pet not found"));
     }
 
+    @Override
     public VaccinationResponseDTO updateVaccination(Long vaccinationId, VaccinationRequestDTO vaccinationRequestDTO) {
         log.info("Updating vaccination with ID: {}", vaccinationId);
         return vaccinationRepository.findById(vaccinationId)
@@ -73,6 +76,7 @@ public class VaccinationService {
             .orElseThrow(() -> new RuntimeException("Vaccination not found"));
     }
 
+    @Override
     public void deleteVaccination(Long vaccinationId) {
         log.info("Deleting vaccination with ID: {}", vaccinationId);
         vaccinationRepository.deleteById(vaccinationId);

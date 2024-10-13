@@ -12,23 +12,26 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PetEventPublisher {
+public class PetEventPublisher implements IPetEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${rabbitmq.exchange.pet}")
     private String petExchange;
 
+    @Override
     public void publishPetCreatedEvent(PetCreatedEvent event) {
         log.info("Publishing pet created event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(petExchange, "pet.created", event);
     }
 
+    @Override
     public void publishPetUpdatedEvent(PetUpdatedEvent event) {
         log.info("Publishing pet updated event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(petExchange, "pet.updated", event);
     }
 
+    @Override
     public void publishPetDeletedEvent(PetDeletedEvent event) {
         log.info("Publishing pet deleted event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(petExchange, "pet.deleted", event);

@@ -2,8 +2,8 @@ package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetHealthSummary;
-import com.wolfhack.vetoptim.petmanagement.service.PetHealthAnalyticsService;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetHealthAnalyticsService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,8 +22,8 @@ import java.util.List;
 @Tag(name = "Pet API", description = "API for managing pets and their health records")
 public class PetController {
 
-    private final PetService petService;
-    private final PetHealthAnalyticsService petHealthAnalyticsService;
+    private final IPetService petService;
+    private final IPetHealthAnalyticsService petHealthAnalyticsService;
 
     @GetMapping
     @Operation(summary = "Get all pets")

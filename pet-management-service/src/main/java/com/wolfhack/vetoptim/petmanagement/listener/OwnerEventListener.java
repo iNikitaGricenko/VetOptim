@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.event.owner.OwnerCreatedEvent;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OwnerEventListener {
 
-    private final PetService petService;
+    private final IPetService petService;
 
     @RabbitListener(queues = "${rabbitmq.queue.owner.created}")
     public void handleOwnerCreatedEvent(OwnerCreatedEvent event) {

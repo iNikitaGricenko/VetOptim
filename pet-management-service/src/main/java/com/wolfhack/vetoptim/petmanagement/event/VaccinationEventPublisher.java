@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class VaccinationEventPublisher {
+public class VaccinationEventPublisher implements IVaccinationEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -20,6 +20,7 @@ public class VaccinationEventPublisher {
     @Value("${rabbitmq.routingKey.vaccination.reminder}")
     private String vaccinationReminderRoutingKey;
 
+    @Override
     public void publishVaccinationReminderEvent(VaccinationReminderEvent event) {
         log.info("Publishing vaccination reminder event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(vaccinationExchange, vaccinationReminderRoutingKey, event);

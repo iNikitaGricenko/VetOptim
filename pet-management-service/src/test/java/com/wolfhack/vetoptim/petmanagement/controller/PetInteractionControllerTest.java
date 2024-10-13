@@ -1,11 +1,10 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionResponseDTO;
-import com.wolfhack.vetoptim.petmanagement.service.PetInteractionService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetInteractionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class PetInteractionControllerTest {
 
     @Mock
-    private PetInteractionService petInteractionService;
+    private IPetInteractionService petInteractionService;
 
     @InjectMocks
     private PetInteractionController petInteractionController;

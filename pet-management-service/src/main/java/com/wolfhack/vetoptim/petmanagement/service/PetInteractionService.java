@@ -22,15 +22,16 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PetInteractionService {
+public class PetInteractionService implements IPetInteractionService {
 
     private final PetInteractionRepository petInteractionRepository;
     private final PetRepository petRepository;
     private final PetInteractionMapper petInteractionMapper;
 
-    private final MedicalRecordService medicalRecordService;
-    private final NotificationService notificationService;
+    private final IMedicalRecordService medicalRecordService;
+    private final INotificationService notificationService;
 
+    @Override
     public List<PetInteractionResponseDTO> getPetInteractions(Long petId) {
         log.info("Fetching interactions for Pet ID: {}", petId);
         return petInteractionRepository.findAllByPetId(petId)
@@ -39,6 +40,7 @@ public class PetInteractionService {
             .toList();
     }
 
+    @Override
     public PetInteractionResponseDTO logInteraction(Long petId, PetInteractionRequestDTO interactionRequest) {
         log.info("Logging new interaction for Pet ID: {}", petId);
 

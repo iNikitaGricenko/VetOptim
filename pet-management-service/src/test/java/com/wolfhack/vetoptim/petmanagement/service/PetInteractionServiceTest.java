@@ -5,7 +5,6 @@ import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionResponseDTO;
 import com.wolfhack.vetoptim.petmanagement.mapper.PetInteractionMapper;
-import com.wolfhack.vetoptim.petmanagement.mapper.PetInteractionMapperImpl;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.model.PetInteraction;
 import com.wolfhack.vetoptim.petmanagement.repository.PetInteractionRepository;
@@ -13,10 +12,8 @@ import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -36,16 +33,16 @@ class PetInteractionServiceTest {
     private PetRepository petRepository;
 
     @Mock
-    private MedicalRecordService medicalRecordService;
+    private IMedicalRecordService medicalRecordService;
 
     @Mock
-    private NotificationService notificationService;
+    private INotificationService notificationService;
 
     @Mock
     private PetInteractionMapper petInteractionMapper;
 
     @InjectMocks
-    private PetInteractionService petInteractionService;
+    private IPetInteractionService IPetInteractionService;
 
     private PetInteractionRequestDTO requestDTO;
     private PetInteractionResponseDTO responseDTO;
@@ -75,7 +72,7 @@ class PetInteractionServiceTest {
         when(petInteractionRepository.findAllByPetId(petId)).thenReturn(interactions);
         when(petInteractionMapper.toDTO(any(PetInteraction.class))).thenReturn(responseDTO);
 
-        List<PetInteractionResponseDTO> result = petInteractionService.getPetInteractions(petId);
+        List<PetInteractionResponseDTO> result = IPetInteractionService.getPetInteractions(petId);
 
         assertEquals(1, result.size());
         assertEquals("Illness", result.getFirst().getInteractionType());
@@ -92,7 +89,7 @@ class PetInteractionServiceTest {
         when(petInteractionRepository.save(any(PetInteraction.class))).thenReturn(interaction);
         when(petInteractionMapper.toDTO(any(PetInteraction.class))).thenReturn(responseDTO);
 
-        PetInteractionResponseDTO savedInteraction = petInteractionService.logInteraction(petId, requestDTO);
+        PetInteractionResponseDTO savedInteraction = IPetInteractionService.logInteraction(petId, requestDTO);
 
         assertEquals("Illness", savedInteraction.getInteractionType());
         verify(petInteractionRepository).save(any(PetInteraction.class));
@@ -110,7 +107,7 @@ class PetInteractionServiceTest {
         when(petInteractionRepository.save(any(PetInteraction.class))).thenReturn(interaction);
         when(petInteractionMapper.toDTO(any(PetInteraction.class))).thenReturn(responseDTO);
 
-        PetInteractionResponseDTO savedInteraction = petInteractionService.logInteraction(1L, requestDTO);
+        PetInteractionResponseDTO savedInteraction = IPetInteractionService.logInteraction(1L, requestDTO);
 
         assertEquals("Aggressive Behavior", savedInteraction.getInteractionType());
         verify(petInteractionRepository).save(any(PetInteraction.class));
@@ -127,7 +124,7 @@ class PetInteractionServiceTest {
         when(petInteractionRepository.save(any(PetInteraction.class))).thenReturn(interaction);
         when(petInteractionMapper.toDTO(any(PetInteraction.class))).thenReturn(responseDTO);
 
-        PetInteractionResponseDTO savedInteraction = petInteractionService.logInteraction(1L, requestDTO);
+        PetInteractionResponseDTO savedInteraction = IPetInteractionService.logInteraction(1L, requestDTO);
 
         assertEquals("Playing", savedInteraction.getInteractionType());
         verify(petInteractionRepository).save(any(PetInteraction.class));

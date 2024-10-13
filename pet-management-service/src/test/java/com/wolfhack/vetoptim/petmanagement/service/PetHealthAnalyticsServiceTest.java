@@ -25,7 +25,7 @@ class PetHealthAnalyticsServiceTest {
     private MedicalRecordRepository medicalRecordRepository;
 
     @InjectMocks
-    private PetHealthAnalyticsService petHealthAnalyticsService;
+    private IPetHealthAnalyticsService IPetHealthAnalyticsService;
 
     private List<MedicalRecord> medicalRecords;
     private MedicalRecord record1;
@@ -55,7 +55,7 @@ class PetHealthAnalyticsServiceTest {
 
         when(medicalRecordRepository.findAllByPetId(petId)).thenReturn(medicalRecords);
 
-        PetHealthSummary summary = petHealthAnalyticsService.getPetHealthSummary(petId);
+        PetHealthSummary summary = IPetHealthAnalyticsService.getPetHealthSummary(petId);
 
         assertEquals(3, summary.getNumberOfVisits());
         assertEquals("Cold", summary.getLatestCondition());
@@ -70,7 +70,7 @@ class PetHealthAnalyticsServiceTest {
 
         when(medicalRecordRepository.findAllByPetId(petId)).thenReturn(Collections.emptyList());
 
-        PetHealthSummary summary = petHealthAnalyticsService.getPetHealthSummary(petId);
+        PetHealthSummary summary = IPetHealthAnalyticsService.getPetHealthSummary(petId);
 
         assertEquals("No health records available.", summary.getLatestCondition());
         assertEquals(0, summary.getNumberOfVisits());
@@ -86,7 +86,7 @@ class PetHealthAnalyticsServiceTest {
 
         when(medicalRecordRepository.findAllByPetId(petId)).thenReturn(recurringRecords);
 
-        PetHealthSummary summary = petHealthAnalyticsService.getPetHealthSummary(petId);
+        PetHealthSummary summary = IPetHealthAnalyticsService.getPetHealthSummary(petId);
 
         assertEquals(3, summary.getNumberOfVisits());
         assertEquals("Cold", summary.getLatestCondition());
@@ -101,7 +101,7 @@ class PetHealthAnalyticsServiceTest {
 
         when(medicalRecordRepository.findAllByPetId(petId)).thenReturn(List.of(record1, record3));
 
-        PetHealthSummary summary = petHealthAnalyticsService.getPetHealthSummary(petId);
+        PetHealthSummary summary = IPetHealthAnalyticsService.getPetHealthSummary(petId);
 
         assertEquals("No recurring conditions", summary.getHealthTrend());
 

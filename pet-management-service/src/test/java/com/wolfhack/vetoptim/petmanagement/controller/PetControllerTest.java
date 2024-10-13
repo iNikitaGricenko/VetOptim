@@ -1,8 +1,8 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
-import com.wolfhack.vetoptim.petmanagement.service.PetHealthAnalyticsService;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetHealthAnalyticsService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,10 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PetControllerTest {
 
     @Mock
-    private PetService petService;
+    private IPetService petService;
 
     @Mock
-    private PetHealthAnalyticsService petHealthAnalyticsService;
+    private IPetHealthAnalyticsService petHealthAnalyticsService;
 
     @InjectMocks
     private PetController petController;

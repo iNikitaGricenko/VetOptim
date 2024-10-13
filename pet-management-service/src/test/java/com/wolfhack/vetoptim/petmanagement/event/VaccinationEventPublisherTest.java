@@ -19,19 +19,19 @@ class VaccinationEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private VaccinationEventPublisher vaccinationEventPublisher;
+    private IVaccinationEventPublisher IVaccinationEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(vaccinationEventPublisher, "vaccinationExchange", "vaccination-exchange");
-        ReflectionTestUtils.setField(vaccinationEventPublisher, "vaccinationReminderRoutingKey", "vaccination.reminder");
+        ReflectionTestUtils.setField(IVaccinationEventPublisher, "vaccinationExchange", "vaccination-exchange");
+        ReflectionTestUtils.setField(IVaccinationEventPublisher, "vaccinationReminderRoutingKey", "vaccination.reminder");
     }
 
     @Test
     void testPublishVaccinationReminderEvent() {
         VaccinationReminderEvent event = new VaccinationReminderEvent(1L, "Buddy", 1L, "Rabies", "upcoming");
 
-        vaccinationEventPublisher.publishVaccinationReminderEvent(event);
+        IVaccinationEventPublisher.publishVaccinationReminderEvent(event);
 
         verify(rabbitTemplate).convertAndSend("vaccination-exchange", "vaccination.reminder", event);
     }

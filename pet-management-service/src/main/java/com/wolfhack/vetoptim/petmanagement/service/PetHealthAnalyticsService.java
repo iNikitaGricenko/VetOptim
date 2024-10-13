@@ -16,10 +16,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PetHealthAnalyticsService {
+public class PetHealthAnalyticsService implements IPetHealthAnalyticsService {
 
     private final MedicalRecordRepository medicalRecordRepository;
 
+    @Override
     public PetHealthSummary getPetHealthSummary(Long petId) {
         log.info("Fetching health summary for Pet ID: {}", petId);
         List<MedicalRecord> medicalRecords = new ArrayList<>(medicalRecordRepository.findAllByPetId(petId));

@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TaskStatusListener {
 
-    private final MedicalRecordService medicalRecordService;
+    private final IMedicalRecordService medicalRecordService;
 
     @Async
     @RabbitListener(queues = "${rabbitmq.queue.task.completed}")

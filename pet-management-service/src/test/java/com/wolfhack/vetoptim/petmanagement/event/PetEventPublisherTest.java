@@ -21,18 +21,18 @@ class PetEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private PetEventPublisher petEventPublisher;
+    private IPetEventPublisher IPetEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(petEventPublisher, "petExchange", "pet-exchange");
+        ReflectionTestUtils.setField(IPetEventPublisher, "petExchange", "pet-exchange");
     }
 
     @Test
     void testPublishPetCreatedEvent() {
         PetCreatedEvent event = new PetCreatedEvent(1L, "Buddy", "Dog", "Bulldog", 1L);
 
-        petEventPublisher.publishPetCreatedEvent(event);
+        IPetEventPublisher.publishPetCreatedEvent(event);
 
         verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.created", event);
     }
@@ -41,7 +41,7 @@ class PetEventPublisherTest {
     void testPublishPetUpdatedEvent() {
         PetUpdatedEvent event = new PetUpdatedEvent(1L, "Buddy", "Dog", "Bulldog", 1L);
 
-        petEventPublisher.publishPetUpdatedEvent(event);
+        IPetEventPublisher.publishPetUpdatedEvent(event);
 
         verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.updated", event);
     }
@@ -50,7 +50,7 @@ class PetEventPublisherTest {
     void testPublishPetDeletedEvent() {
         PetDeletedEvent event = new PetDeletedEvent(1L);
 
-        petEventPublisher.publishPetDeletedEvent(event);
+        IPetEventPublisher.publishPetDeletedEvent(event);
 
         verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.deleted", event);
     }

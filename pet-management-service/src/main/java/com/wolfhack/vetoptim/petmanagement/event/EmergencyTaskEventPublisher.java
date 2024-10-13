@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EmergencyTaskEventPublisher {
+public class EmergencyTaskEventPublisher implements IEmergencyTaskEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -20,6 +20,7 @@ public class EmergencyTaskEventPublisher {
     @Value("${rabbitmq.routingKey.task.emergency}")
     private String emergencyTaskRoutingKey;
 
+    @Override
     public void publishEmergencyTaskCreationEvent(EmergencyTaskCreationEvent event) {
         log.info("Publishing emergency task creation event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(taskExchange, emergencyTaskRoutingKey, event);

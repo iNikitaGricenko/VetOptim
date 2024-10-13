@@ -1,9 +1,9 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
 import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
-import com.wolfhack.vetoptim.petmanagement.event.EmergencyTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.FollowUpTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.MedicalTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IEmergencyTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IFollowUpTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IMedicalTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.exception.MedicalRecordNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.mapper.MedicalRecordMapper;
@@ -35,19 +35,19 @@ class MedicalRecordServiceTest {
     private PetRepository petRepository;
 
     @Mock
-    private MedicalTaskEventPublisher medicalTaskEventPublisher;
+    private IMedicalTaskEventPublisher medicalTaskEventPublisher;
 
     @Mock
-    private EmergencyTaskEventPublisher emergencyTaskEventPublisher;
+    private IEmergencyTaskEventPublisher emergencyTaskEventPublisher;
 
     @Mock
-    private FollowUpTaskEventPublisher followUpTaskEventPublisher;
+    private IFollowUpTaskEventPublisher followUpTaskEventPublisher;
 
     @Mock
     private MedicalRecordMapper medicalRecordMapper;
 
     @InjectMocks
-    private MedicalRecordService medicalRecordService;
+    private IMedicalRecordService medicalRecordService;
 
     private Pet pet;
     private MedicalRecord medicalRecord;

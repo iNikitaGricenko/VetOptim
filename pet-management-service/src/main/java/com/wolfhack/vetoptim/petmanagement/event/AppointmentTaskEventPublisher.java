@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AppointmentTaskEventPublisher {
+public class AppointmentTaskEventPublisher implements IAppointmentTaskEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -20,6 +20,7 @@ public class AppointmentTaskEventPublisher {
     @Value("${rabbitmq.routingKey.task.appointment}")
     private String appointmentTaskRoutingKey;
 
+    @Override
     public void publishAppointmentTaskCreationEvent(AppointmentTaskCreationEvent event) {
         log.info("Publishing appointment task creation event for Appointment ID: {}", event.getAppointmentId());
         rabbitTemplate.convertAndSend(appointmentTaskExchange, appointmentTaskRoutingKey, event);

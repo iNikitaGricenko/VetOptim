@@ -22,7 +22,7 @@ class NotificationServiceTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private NotificationService notificationService;
+    private INotificationService notificationService;
 
     @BeforeEach
     void setUp() {

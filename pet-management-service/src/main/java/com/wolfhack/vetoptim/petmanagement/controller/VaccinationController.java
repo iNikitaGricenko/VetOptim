@@ -2,7 +2,7 @@ package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
-import com.wolfhack.vetoptim.petmanagement.service.VaccinationService;
+import com.wolfhack.vetoptim.petmanagement.service.IVaccinationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "Vaccination API", description = "API for managing vaccinations for pets")
 public class VaccinationController {
 
-	private final VaccinationService vaccinationService;
+	private final IVaccinationService vaccinationService;
 
 	@GetMapping("/pet/{petId}")
 	@Operation(summary = "Get all vaccinations for a pet")

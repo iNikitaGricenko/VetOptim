@@ -3,7 +3,7 @@ package com.wolfhack.vetoptim.petmanagement.service;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
 import com.wolfhack.vetoptim.common.event.vaccination.VaccinationReminderEvent;
-import com.wolfhack.vetoptim.petmanagement.event.VaccinationEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IVaccinationEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.mapper.VaccinationMapper;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
@@ -34,13 +34,13 @@ class VaccinationServiceTest {
     private PetRepository petRepository;
 
     @Mock
-    private VaccinationEventPublisher vaccinationEventPublisher;
+    private IVaccinationEventPublisher vaccinationEventPublisher;
 
     @Mock
     private VaccinationMapper vaccinationMapper;
 
     @InjectMocks
-    private VaccinationService vaccinationService;
+    private IVaccinationService IVaccinationService;
 
     private Pet pet;
     private Vaccination vaccination;
@@ -71,7 +71,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.findAllByPetId(petId)).thenReturn(vaccinations);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        List<VaccinationResponseDTO> result = vaccinationService.getVaccinationsForPet(petId);
+        List<VaccinationResponseDTO> result = IVaccinationService.getVaccinationsForPet(petId);
 
         assertEquals(1, result.size());
         assertEquals("Rabies", result.getFirst().getVaccineName());
@@ -89,7 +89,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        VaccinationResponseDTO savedVaccination = vaccinationService.createVaccination(petId, requestDTO);
+        VaccinationResponseDTO savedVaccination = IVaccinationService.createVaccination(petId, requestDTO);
 
         assertEquals("Rabies", savedVaccination.getVaccineName());
         verify(vaccinationRepository).save(vaccination);
@@ -107,7 +107,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        vaccinationService.createVaccination(petId, requestDTO);
+        IVaccinationService.createVaccination(petId, requestDTO);
 
         verify(vaccinationEventPublisher).publishVaccinationReminderEvent(any(VaccinationReminderEvent.class));
     }
@@ -123,7 +123,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        vaccinationService.createVaccination(petId, requestDTO);
+        IVaccinationService.createVaccination(petId, requestDTO);
 
         verify(vaccinationEventPublisher).publishVaccinationReminderEvent(any(VaccinationReminderEvent.class));
     }
@@ -135,7 +135,7 @@ class VaccinationServiceTest {
 
         when(petRepository.findById(petId)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> vaccinationService.createVaccination(petId, requestDTO));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> IVaccinationService.createVaccination(petId, requestDTO));
 
         assertEquals("Pet not found", exception.getMessage());
         verify(petRepository).findById(petId);
@@ -152,7 +152,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.save(any(Vaccination.class))).thenReturn(vaccination);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        VaccinationResponseDTO updatedVaccination = vaccinationService.updateVaccination(vaccinationId, updatedDetails);
+        VaccinationResponseDTO updatedVaccination = IVaccinationService.updateVaccination(vaccinationId, updatedDetails);
 
         assertEquals("Distemper", updatedVaccination.getVaccineName());
         verify(vaccinationRepository).save(any(Vaccination.class));
@@ -170,7 +170,7 @@ class VaccinationServiceTest {
         when(vaccinationRepository.save(any(Vaccination.class))).thenReturn(vaccination);
         when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        vaccinationService.updateVaccination(vaccinationId, updatedDetails);
+        IVaccinationService.updateVaccination(vaccinationId, updatedDetails);
 
         verify(vaccinationEventPublisher).publishVaccinationReminderEvent(any(VaccinationReminderEvent.class));
     }
@@ -179,7 +179,7 @@ class VaccinationServiceTest {
     void testDeleteVaccination_Success() {
         Long vaccinationId = 1L;
 
-        vaccinationService.deleteVaccination(vaccinationId);
+        IVaccinationService.deleteVaccination(vaccinationId);
 
         verify(vaccinationRepository).deleteById(vaccinationId);
     }

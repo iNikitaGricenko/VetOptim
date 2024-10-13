@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MedicalTaskEventPublisher {
+public class MedicalTaskEventPublisher implements IMedicalTaskEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -20,6 +20,7 @@ public class MedicalTaskEventPublisher {
     @Value("${rabbitmq.routingKey.task.medical}")
     private String taskRoutingKey;
 
+    @Override
     public void publishMedicalTaskCreationEvent(MedicalTaskCreationEvent event) {
         log.info("Publishing medical task creation event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(taskExchange, taskRoutingKey, event);

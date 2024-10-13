@@ -19,19 +19,19 @@ class MedicalTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private MedicalTaskEventPublisher medicalTaskEventPublisher;
+    private IMedicalTaskEventPublisher IMedicalTaskEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(medicalTaskEventPublisher, "taskExchange", "task-exchange");
-        ReflectionTestUtils.setField(medicalTaskEventPublisher, "taskRoutingKey", "task.medical");
+        ReflectionTestUtils.setField(IMedicalTaskEventPublisher, "taskExchange", "task-exchange");
+        ReflectionTestUtils.setField(IMedicalTaskEventPublisher, "taskRoutingKey", "task.medical");
     }
 
     @Test
     void testPublishMedicalTaskCreationEvent() {
         MedicalTaskCreationEvent event = new MedicalTaskCreationEvent(1L, "Buddy", "John Doe", "Fever", "Medical task for treatment");
 
-        medicalTaskEventPublisher.publishMedicalTaskCreationEvent(event);
+        IMedicalTaskEventPublisher.publishMedicalTaskCreationEvent(event);
 
         verify(rabbitTemplate).convertAndSend("task-exchange", "task.medical", event);
     }

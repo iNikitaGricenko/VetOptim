@@ -7,8 +7,8 @@ import com.wolfhack.vetoptim.common.event.pet.PetCreatedEvent;
 import com.wolfhack.vetoptim.common.event.pet.PetDeletedEvent;
 import com.wolfhack.vetoptim.common.event.pet.PetUpdatedEvent;
 import com.wolfhack.vetoptim.petmanagement.client.OwnerClient;
-import com.wolfhack.vetoptim.petmanagement.event.AppointmentTaskEventPublisher;
-import com.wolfhack.vetoptim.petmanagement.event.PetEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IAppointmentTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.event.IPetEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.exception.OwnerNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.mapper.PetMapper;
@@ -25,14 +25,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PetService {
+public class PetService implements IPetService {
 
     private final PetRepository petRepository;
     private final PetMapper petMapper;
     private final OwnerClient ownerClient;
-    private final PetEventPublisher petEventPublisher;
-    private final AppointmentTaskEventPublisher taskEventPublisher;
+    private final IPetEventPublisher petEventPublisher;
+    private final IAppointmentTaskEventPublisher taskEventPublisher;
 
+    @Override
     public List<PetDTO> getAllPets() {
         log.info("Fetching all pets.");
         return petRepository.findAll().stream()
@@ -40,6 +41,7 @@ public class PetService {
             .collect(Collectors.toList());
     }
 
+    @Override
     public Optional<PetDTO> getPetById(Long id) {
         log.info("Fetching pet with ID: {}", id);
         return petRepository.findById(id)
@@ -49,6 +51,7 @@ public class PetService {
             });
     }
 
+    @Override
     public List<PetDTO> getAllPetsByOwnerId(Long ownerId) {
         log.info("Fetching pets with ownerID: {}", ownerId);
         return petRepository.findAllByOwnerId(ownerId).stream()
@@ -56,6 +59,7 @@ public class PetService {
             .collect(Collectors.toList());
     }
 
+    @Override
     public PetDTO createPet(PetDTO petDTO) {
         log.info("Creating pet with name: {}", petDTO.getName());
 
@@ -75,6 +79,7 @@ public class PetService {
         return petMapper.toDTO(savedPet);
     }
 
+    @Override
     public PetDTO updatePet(Long id, PetDTO petDetails) {
         log.info("Updating pet with ID: {}", id);
         return petRepository.findById(id)
@@ -91,6 +96,7 @@ public class PetService {
             .orElseThrow(() -> new PetNotFoundException(id));
     }
 
+    @Override
     public void updateOwnerInfoForPets(Long ownerId, String ownerName) {
         log.info("Updating owner information for all pets of owner ID: {}", ownerId);
         List<Pet> pets = petRepository.findAllByOwnerId(ownerId);
@@ -105,6 +111,7 @@ public class PetService {
         }
     }
 
+    @Override
     public void deletePet(Long id) {
         log.info("Deleting pet with ID: {}", id);
         petRepository.findById(id).ifPresentOrElse(pet -> {
@@ -117,6 +124,7 @@ public class PetService {
         });
     }
 
+    @Override
     public void handleAppointmentCreated(AppointmentDTO appointmentDTO) {
         log.info("Handling appointment creation for Pet ID: {}", appointmentDTO.getPetId());
         petRepository.findById(appointmentDTO.getPetId()).ifPresent(pet -> {
@@ -133,6 +141,7 @@ public class PetService {
         });
     }
 
+    @Override
     public void handleAppointmentUpdated(AppointmentDTO appointmentDTO) {
         log.info("Handling appointment update for Pet ID: {}", appointmentDTO.getPetId());
         petRepository.findById(appointmentDTO.getPetId()).ifPresent(pet -> {

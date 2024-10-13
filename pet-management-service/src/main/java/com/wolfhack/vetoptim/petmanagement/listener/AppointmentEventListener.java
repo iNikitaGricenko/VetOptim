@@ -1,8 +1,8 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
-import com.wolfhack.vetoptim.petmanagement.service.PetService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -14,18 +14,18 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AppointmentEventListener {
 
-    private final PetService petService;
-    private final MedicalRecordService medicalRecordService;
+    private final IPetService IPetService;
+    private final IMedicalRecordService IMedicalRecordService;
 
     @Async
     @RabbitListener(queues = "${rabbitmq.queue.appointment.created}")
     public void onAppointmentCreated(AppointmentDTO appointmentDTO) {
         log.info("Processing appointment created event for Pet ID: {}", appointmentDTO.getPetId());
-        petService.handleAppointmentCreated(appointmentDTO);
+        IPetService.handleAppointmentCreated(appointmentDTO);
 
         if (appointmentDTO.getDiagnosis() != null && appointmentDTO.getTreatment() != null) {
             log.info("Creating medical record for pet ID: {} after appointment", appointmentDTO.getPetId());
-            medicalRecordService.createMedicalRecordFromAppointment(
+            IMedicalRecordService.createMedicalRecordFromAppointment(
                 appointmentDTO.getPetId(),
                 appointmentDTO.getDiagnosis(),
                 appointmentDTO.getTreatment()
@@ -39,11 +39,11 @@ public class AppointmentEventListener {
     @RabbitListener(queues = "${rabbitmq.queue.appointment.updated}")
     public void onAppointmentUpdated(AppointmentDTO appointmentDTO) {
         log.info("Processing appointment update event for Pet ID: {}", appointmentDTO.getPetId());
-        petService.handleAppointmentUpdated(appointmentDTO);
+        IPetService.handleAppointmentUpdated(appointmentDTO);
 
         if (appointmentDTO.getDiagnosis() != null && appointmentDTO.getTreatment() != null) {
             log.info("Updating medical record for pet ID: {} after appointment update", appointmentDTO.getPetId());
-            medicalRecordService.createMedicalRecordFromAppointment(
+            IMedicalRecordService.createMedicalRecordFromAppointment(
                 appointmentDTO.getPetId(),
                 appointmentDTO.getDiagnosis(),
                 appointmentDTO.getTreatment()

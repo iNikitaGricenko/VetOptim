@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,7 +20,7 @@ import java.util.List;
 @Tag(name = "Medical Record API", description = "API for managing medical records for pets")
 public class MedicalRecordController {
 
-    private final MedicalRecordService medicalRecordService;
+    private final IMedicalRecordService medicalRecordService;
 
     @GetMapping
     @Operation(summary = "Get all medical records for a pet")

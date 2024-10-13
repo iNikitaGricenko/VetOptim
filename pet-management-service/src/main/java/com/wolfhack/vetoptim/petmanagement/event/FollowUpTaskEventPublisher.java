@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FollowUpTaskEventPublisher {
+public class FollowUpTaskEventPublisher implements IFollowUpTaskEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -20,6 +20,7 @@ public class FollowUpTaskEventPublisher {
     @Value("${rabbitmq.routingKey.task.followup}")
     private String followUpTaskRoutingKey;
 
+    @Override
     public void publishFollowUpTaskCreationEvent(FollowUpTaskCreationEvent event) {
         log.info("Publishing follow-up task creation event for Pet ID: {}", event.getPetId());
         rabbitTemplate.convertAndSend(taskExchange, followUpTaskRoutingKey, event);

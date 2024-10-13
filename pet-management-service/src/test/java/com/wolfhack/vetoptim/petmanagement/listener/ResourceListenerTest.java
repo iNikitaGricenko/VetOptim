@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.listener;
 
 import com.wolfhack.vetoptim.common.event.resource.ResourceDepletedEvent;
-import com.wolfhack.vetoptim.petmanagement.service.NotificationService;
+import com.wolfhack.vetoptim.petmanagement.service.INotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.verify;
 class ResourceListenerTest {
 
     @Mock
-    private NotificationService notificationService;
+    private INotificationService notificationService;
 
     @InjectMocks
     private ResourceListener resourceListener;

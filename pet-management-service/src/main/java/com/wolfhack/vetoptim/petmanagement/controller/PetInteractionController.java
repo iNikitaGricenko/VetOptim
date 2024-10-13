@@ -2,8 +2,7 @@ package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionRequestDTO;
 import com.wolfhack.vetoptim.common.dto.pet.PetInteractionResponseDTO;
-import com.wolfhack.vetoptim.petmanagement.model.PetInteraction;
-import com.wolfhack.vetoptim.petmanagement.service.PetInteractionService;
+import com.wolfhack.vetoptim.petmanagement.service.IPetInteractionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,7 +21,7 @@ import java.util.List;
 @Tag(name = "Pet Interaction API", description = "API for managing interactions with pets")
 public class PetInteractionController {
 
-	private final PetInteractionService petInteractionService;
+	private final IPetInteractionService petInteractionService;
 
 	@GetMapping
 	@Operation(summary = "Get all interactions for a pet")

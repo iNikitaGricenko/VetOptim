@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
 import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
-import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
+import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MedicalRecordControllerTest {
 
     @Mock
-    private MedicalRecordService medicalRecordService;
+    private IMedicalRecordService medicalRecordService;
 
     @InjectMocks
     private MedicalRecordController medicalRecordController;

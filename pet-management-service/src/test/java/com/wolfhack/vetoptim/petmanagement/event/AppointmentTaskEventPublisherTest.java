@@ -19,19 +19,19 @@ class AppointmentTaskEventPublisherTest {
     private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
-    private AppointmentTaskEventPublisher appointmentTaskEventPublisher;
+    private IAppointmentTaskEventPublisher IAppointmentTaskEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(appointmentTaskEventPublisher, "appointmentTaskExchange", "appointment-task-exchange");
-        ReflectionTestUtils.setField(appointmentTaskEventPublisher, "appointmentTaskRoutingKey", "task.appointment");
+        ReflectionTestUtils.setField(IAppointmentTaskEventPublisher, "appointmentTaskExchange", "appointment-task-exchange");
+        ReflectionTestUtils.setField(IAppointmentTaskEventPublisher, "appointmentTaskRoutingKey", "task.appointment");
     }
 
     @Test
     void testPublishAppointmentTaskCreationEvent() {
         AppointmentTaskCreationEvent event = new AppointmentTaskCreationEvent(1L, 2L, "Buddy", "Dr. Smith", "Checkup", "Checkup for Buddy");
 
-        appointmentTaskEventPublisher.publishAppointmentTaskCreationEvent(event);
+        IAppointmentTaskEventPublisher.publishAppointmentTaskCreationEvent(event);
 
         verify(rabbitTemplate).convertAndSend("appointment-task-exchange", "task.appointment", event);
     }
