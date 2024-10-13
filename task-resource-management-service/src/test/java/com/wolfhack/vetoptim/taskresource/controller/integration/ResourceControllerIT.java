@@ -34,10 +34,10 @@ class ResourceControllerIT {
 
     @Test
     void testCreateResource_Success() throws Exception {
-        mockMvc.perform(post("/resources")
+        mockMvc.perform(post("/api/resources")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"name\": \"Surgical Kit\", \"quantity\": 5, \"type\": \"MEDICAL_SUPPLY\" }"))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.name").value("Surgical Kit"))
             .andExpect(jsonPath("$.quantity").value(5));
     }
@@ -50,7 +50,7 @@ class ResourceControllerIT {
         resource.setType(ResourceType.MEDICAL_SUPPLY);
         resourceRepository.save(resource);
 
-        mockMvc.perform(get("/resources")
+        mockMvc.perform(get("/api/resources")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].name").value("Surgical Kit"));

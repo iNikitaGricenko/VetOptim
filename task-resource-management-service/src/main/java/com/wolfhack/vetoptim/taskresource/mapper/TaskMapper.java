@@ -7,6 +7,10 @@ import org.mapstruct.*;
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface TaskMapper {
 
+	TaskDTO toDTO(Task task);
+
+	Task toModel(TaskDTO dto);
+
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
     Task updateTaskFromDTO(TaskDTO taskDTO, @MappingTarget Task task);
 

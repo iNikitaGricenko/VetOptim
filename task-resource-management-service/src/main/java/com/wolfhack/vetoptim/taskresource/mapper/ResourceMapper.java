@@ -7,6 +7,10 @@ import org.mapstruct.*;
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ResourceMapper {
 
+	ResourceDTO toDTO(Resource resource);
+
+	Resource toModel(ResourceDTO dto);
+
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
 	Resource updateResourceFromDTO(ResourceDTO resourceDTO, @MappingTarget Resource resource);
 

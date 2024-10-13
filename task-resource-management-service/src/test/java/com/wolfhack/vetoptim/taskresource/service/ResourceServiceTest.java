@@ -39,6 +39,7 @@ class ResourceServiceTest {
         resource.setQuantity(10);
 
         resourceDTO = new ResourceDTO();
+        resourceDTO.setId(1L);
         resourceDTO.setName("Vaccine Updated");
     }
 
@@ -52,25 +53,28 @@ class ResourceServiceTest {
     @Test
     void createResource_Success() {
         when(resourceRepository.save(any(Resource.class))).thenReturn(resource);
+        when(resourceMapper.toModel(any(ResourceDTO.class))).thenReturn(resource);
+        when(resourceMapper.toDTO(any(Resource.class))).thenReturn(resourceDTO);
 
-        resourceService.createResource(resource);
+        ResourceDTO createdResource = resourceService.createResource(resourceDTO);
 
         verify(resourceRepository).save(resource);
+        assertEquals("Vaccine Updated", createdResource.getName());
     }
 
     @Test
     void updateResource_Success() {
-        when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));  // Simulate finding the resource
-        when(resourceMapper.updateResourceFromDTO(resourceDTO, resource)).thenReturn(resource);  // Return updated resource
-        when(resourceRepository.save(resource)).thenReturn(resource);  // Simulate save returning the updated resource
+        when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
+        when(resourceMapper.updateResourceFromDTO(resourceDTO, resource)).thenReturn(resource);
+        when(resourceRepository.save(resource)).thenReturn(resource);
+        when(resourceMapper.toDTO(resource)).thenReturn(resourceDTO);
 
-        Resource updatedResource = resourceService.updateResource(1L, resourceDTO);
+        ResourceDTO updatedResource = resourceService.updateResource(1L, resourceDTO);
 
         verify(resourceRepository).save(resource);
-        assertNotNull(updatedResource);  // Check if the resource is not null
-        assertEquals(resource.getId(), updatedResource.getId());  // Validate that the IDs match
+        assertNotNull(updatedResource);
+        assertEquals(resource.getId(), updatedResource.getId());
     }
-
 
     @Test
     void updateResource_ResourceNotFound() {
@@ -84,14 +88,14 @@ class ResourceServiceTest {
         when(resourceRepository.findById(1L)).thenReturn(Optional.of(resource));
         when(resourceMapper.partialUpdateResourceFromDTO(resourceDTO, resource)).thenReturn(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
+        when(resourceMapper.toDTO(resource)).thenReturn(resourceDTO);
 
-        Resource updatedResource = resourceService.partialUpdateResource(1L, resourceDTO);
+        ResourceDTO updatedResource = resourceService.partialUpdateResource(1L, resourceDTO);
 
         verify(resourceRepository).save(resource);
         assertNotNull(updatedResource);
         assertEquals(resource.getId(), updatedResource.getId());
     }
-
 
     @Test
     void partialUpdateResource_ResourceNotFound() {

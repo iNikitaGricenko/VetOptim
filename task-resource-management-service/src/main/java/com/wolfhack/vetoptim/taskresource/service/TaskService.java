@@ -1,9 +1,9 @@
 package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
-import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.dto.TaskDTO;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCreatedEvent;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
@@ -25,7 +25,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TaskService {
+public class TaskService implements ITaskService {
 
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
@@ -39,20 +39,27 @@ public class TaskService {
     private final WorkloadBalancingService workloadBalancingService;
     private final TaskAssignmentService taskAssignmentService;
 
-    public List<Task> getAllTasks() {
+    @Override
+    public List<TaskDTO> getAllTasks() {
         log.info("Fetching all tasks");
-        return taskRepository.findAll();
+        return taskRepository.findAll().stream()
+            .map(taskMapper::toDTO)
+            .toList();
     }
 
+    @Override
     @Cacheable("tasks")
-    public Optional<Task> getTaskById(Long id) {
+    public Optional<TaskDTO> getTaskById(Long id) {
         log.info("Fetching task with ID: {}", id);
-        return taskRepository.findById(id);
+        return taskRepository.findById(id).map(taskMapper::toDTO);
     }
 
-    public Task createTask(Task task) {
-        log.info("Creating task for pet ID: {}", task.getPetId());
-        PetDTO pet = petClient.getPetById(task.getPetId());
+    @Override
+    public TaskDTO createTask(TaskDTO taskDTO) {
+        log.info("Creating task for pet ID: {}", taskDTO.getPetId());
+        PetDTO pet = petClient.getPetById(taskDTO.getPetId());
+
+        Task task = taskMapper.toModel(taskDTO);
 
         Optional<Staff> assignedStaff = taskAssignmentService.assignTaskToStaff(task);
         assignedStaff.ifPresent(staff -> {
@@ -63,7 +70,13 @@ public class TaskService {
         resourceAllocationService.allocateResourcesForTask(task);
         workloadBalancingService.balanceWorkloadAndAssignTask(task);
 
-        TaskCreatedEvent event = new TaskCreatedEvent(task.getId(), task.getPetId(), task.getTaskType().toString(), task.getDescription());
+        TaskCreatedEvent event = new TaskCreatedEvent(
+            task.getId(),
+            task.getPetId(),
+            task.getTaskType().toString(),
+            task.getDescription()
+        );
+
         taskEventPublisher.publishTaskCreatedEvent(event);
 
         taskHistoryService.logTaskChange(task, "Task created");
@@ -71,19 +84,25 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
         log.debug("Task created with ID: {}", savedTask.getId());
 
-        return savedTask;
+        return taskMapper.toDTO(savedTask);
     }
 
-    public Task updateTask(Long id, TaskDTO taskDTO) {
+    @Override
+    public TaskDTO updateTask(Long id, TaskDTO taskDTO) {
         log.info("Updating task with ID: {}", id);
-        Task task = taskRepository.findById(id).orElseThrow(() -> {
-            log.error("Task not found with ID: {}", id);
-            return new RuntimeException("Task not found");
-        });
+        Task task = taskRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
+
         taskMapper.updateTaskFromDTO(taskDTO, task);
 
         if (taskDTO.getStatus() == TaskStatus.COMPLETED) {
-            TaskCompletedEvent event = new TaskCompletedEvent(task.getId(), task.getPetId(), task.getTaskType().name(), task.getDescription(), task.getStatus());
+            TaskCompletedEvent event = new TaskCompletedEvent(
+                task.getId(),
+                task.getPetId(),
+                task.getTaskType().name(),
+                task.getDescription(),
+                task.getStatus()
+            );
             taskEventPublisher.publishTaskCompletedEvent(event);
         }
 
@@ -92,62 +111,89 @@ public class TaskService {
         Task updatedTask = taskRepository.save(task);
         log.info("Task updated with ID: {}", updatedTask.getId());
 
-        return updatedTask;
+        return taskMapper.toDTO(updatedTask);
     }
 
-        public Task completeTask(Long taskId) {
-        return taskRepository.findById(taskId)
+    @Override
+    public TaskDTO completeTask(Long id) {
+        return taskRepository.findById(id)
             .map(task -> {
                 task.setStatus(TaskStatus.COMPLETED);
                 Task savedTask = taskRepository.save(task);
-                log.info("Task {} completed for pet ID: {}", taskId, task.getPetId());
+                log.info("Task {} completed for pet ID: {}", id, task.getPetId());
 
-                billingClient.sendTaskBillingRequest(new TaskBillingRequest(
+                billingClient.sendTaskBillingRequest(
+                    new TaskBillingRequest(
+                        task.getId(),
+                        task.getPetId(),
+                        task.getDescription(),
+                        task.getTaskType(),
+                        resourceUsageMapper.toDTO(savedTask.getResourcesUsed())
+                    )
+                );
+
+                TaskCompletedEvent event = new TaskCompletedEvent(
                     task.getId(),
                     task.getPetId(),
+                    task.getTaskType().name(),
                     task.getDescription(),
-                    task.getTaskType(),
-                    resourceUsageMapper.toDTO(savedTask.getResourcesUsed())
-                ));
+                    TaskStatus.COMPLETED
+                );
 
-                TaskCompletedEvent event = new TaskCompletedEvent(task.getId(), task.getPetId(), task.getTaskType().name(), task.getDescription(), TaskStatus.COMPLETED);
                 taskEventPublisher.publishTaskCompletedEvent(event);
 
-                return savedTask;
+                return taskMapper.toDTO(savedTask);
             })
             .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
-    public Task failTask(Long taskId) {
-        return taskRepository.findById(taskId)
+    @Override
+    public TaskDTO failTask(Long id) {
+        return taskRepository.findById(id)
             .map(task -> {
                 task.setStatus(TaskStatus.FAILED);
                 Task savedTask = taskRepository.save(task);
-                log.info("Task {} failed for pet ID: {}", taskId, task.getPetId());
+                log.info("Task {} failed for pet ID: {}", id, task.getPetId());
 
-                TaskCompletedEvent event = new TaskCompletedEvent(task.getId(), task.getPetId(), task.getTaskType().name(), task.getDescription(), TaskStatus.FAILED);
+                TaskCompletedEvent event = new TaskCompletedEvent(
+                    task.getId(),
+                    task.getPetId(),
+                    task.getTaskType().name(),
+                    task.getDescription(),
+                    TaskStatus.FAILED
+                );
+
                 taskEventPublisher.publishTaskCompletedEvent(event);
 
-                return savedTask;
+                return taskMapper.toDTO(savedTask);
             })
             .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
-    public Task escalateTask(Long taskId) {
-        return taskRepository.findById(taskId)
+    @Override
+    public TaskDTO escalateTask(Long id) {
+        return taskRepository.findById(id)
             .map(task -> {
                 task.setStatus(TaskStatus.ESCALATED);
                 Task savedTask = taskRepository.save(task);
-                log.info("Task {} escalated for pet ID: {}", taskId, task.getPetId());
+                log.info("Task {} escalated for pet ID: {}", id, task.getPetId());
 
-                TaskCompletedEvent event = new TaskCompletedEvent(task.getId(), task.getPetId(), task.getTaskType().name(), task.getDescription(), TaskStatus.ESCALATED);
+                TaskCompletedEvent event = new TaskCompletedEvent(
+                    task.getId(),
+                    task.getPetId(),
+                    task.getTaskType().name(),
+                    task.getDescription(),
+                    TaskStatus.ESCALATED
+                );
+
                 taskEventPublisher.publishTaskCompletedEvent(event);
 
-                return savedTask;
+                return taskMapper.toDTO(savedTask);
             })
             .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
+    @Override
     public void deleteTask(Long id) {
         log.info("Deleting task with ID: {}", id);
         taskRepository.deleteById(id);

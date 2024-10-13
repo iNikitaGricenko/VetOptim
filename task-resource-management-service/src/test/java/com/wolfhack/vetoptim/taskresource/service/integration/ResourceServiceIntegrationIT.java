@@ -3,7 +3,7 @@ package com.wolfhack.vetoptim.taskresource.service.integration;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
-import com.wolfhack.vetoptim.taskresource.service.ResourceService;
+import com.wolfhack.vetoptim.taskresource.service.IResourceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +38,7 @@ class ResourceServiceIntegrationIT {
     private ResourceRepository resourceRepository;
 
     @Autowired
-    private ResourceService resourceService;
+    private IResourceService resourceService;
 
     @MockBean
     private BillingClient billingClient;
@@ -55,10 +55,10 @@ class ResourceServiceIntegrationIT {
         resource.setType(com.wolfhack.vetoptim.common.ResourceType.EQUIPMENT);
         resource.setQuantity(10);
 
-        mockMvc.perform(post("/resources")
+        mockMvc.perform(post("/api/resources")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"name\": \"Surgical Kit\", \"type\": \"EQUIPMENT\", \"quantity\": 10 }"))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.name").value("Surgical Kit"))
             .andExpect(jsonPath("$.quantity").value(10));
 
@@ -76,14 +76,14 @@ class ResourceServiceIntegrationIT {
         resource.setQuantity(10);
         resource = resourceRepository.save(resource);
 
-        mockMvc.perform(put("/resources/{id}", resource.getId())
+        mockMvc.perform(put("/api/resources/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"name\": \"Surgical Kit\", \"type\": \"EQUIPMENT\", \"quantity\": 15 }"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Surgical Kit"))
             .andExpect(jsonPath("$.quantity").value(15));
 
-        Optional<Resource> updatedResource = resourceRepository.findById(resource.getId());
+        Optional<Resource> updatedResource = resourceRepository.findById(1L);
         assertTrue(updatedResource.isPresent());
         assertEquals(15, updatedResource.get().getQuantity());
     }
@@ -96,7 +96,7 @@ class ResourceServiceIntegrationIT {
         resource.setQuantity(10);
         resource = resourceRepository.save(resource);
 
-        mockMvc.perform(patch("/resources/{id}", resource.getId())
+        mockMvc.perform(patch("/api/resources/{id}", resource.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"quantity\": 20 }"))
             .andExpect(status().isOk())
@@ -116,7 +116,7 @@ class ResourceServiceIntegrationIT {
         resource.setQuantity(10);
         resource = resourceRepository.save(resource);
 
-        mockMvc.perform(delete("/resources/{id}", resource.getId())
+        mockMvc.perform(delete("/api/resources/{id}", resource.getId())
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
@@ -138,7 +138,7 @@ class ResourceServiceIntegrationIT {
         resource2.setQuantity(20);
         resourceRepository.save(resource2);
 
-        mockMvc.perform(get("/resources")
+        mockMvc.perform(get("/api/resources")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))

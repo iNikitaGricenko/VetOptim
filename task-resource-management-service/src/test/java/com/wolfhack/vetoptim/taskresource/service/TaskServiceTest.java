@@ -2,9 +2,9 @@ package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
-import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.dto.TaskDTO;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCreatedEvent;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
@@ -64,6 +64,7 @@ class TaskServiceTest {
     private TaskService taskService;
 
     private Task task;
+    private TaskDTO taskDTO;
 
     @BeforeEach
     void setUp() {
@@ -72,13 +73,19 @@ class TaskServiceTest {
         task.setPetId(100L);
         task.setTaskType(TaskType.CHECKUP);
         task.setDescription("Initial Task");
+
+        taskDTO = new TaskDTO();
+        taskDTO.setPetId(100L);
+        taskDTO.setTaskType(TaskType.CHECKUP);
+        taskDTO.setDescription("Initial Task");
     }
 
     @Test
     void testGetAllTasks() {
         when(taskRepository.findAll()).thenReturn(List.of(task));
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
 
-        List<Task> tasks = taskService.getAllTasks();
+        List<TaskDTO> tasks = taskService.getAllTasks();
 
         assertNotNull(tasks);
         assertEquals(1, tasks.size());
@@ -88,40 +95,39 @@ class TaskServiceTest {
     @Test
     void testGetTaskById() {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
 
-        Optional<Task> result = taskService.getTaskById(1L);
+        Optional<TaskDTO> result = taskService.getTaskById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals(task, result.get());
+        assertEquals(taskDTO, result.get());
         verify(taskRepository, times(1)).findById(1L);
     }
 
     @Test
     void testCreateTask() {
-        PetDTO petDTO = new PetDTO();
-        petDTO.setId(task.getPetId());
-
-        when(petClient.getPetById(task.getPetId())).thenReturn(petDTO);
+        when(taskMapper.toModel(any(TaskDTO.class))).thenReturn(task);
         when(taskRepository.save(task)).thenReturn(task);
-        when(taskAssignmentService.assignTaskToStaff(task)).thenReturn(Optional.empty());
+        when(taskMapper.toDTO(task)).thenReturn(taskDTO);
+        when(petClient.getPetById(taskDTO.getPetId())).thenReturn(new PetDTO());
 
-        Task createdTask = taskService.createTask(task);
+        TaskDTO createdTask = taskService.createTask(taskDTO);
 
         assertNotNull(createdTask);
-        assertEquals(task.getId(), createdTask.getId());
+        assertEquals(taskDTO.getId(), createdTask.getId());
         verify(taskRepository, times(1)).save(task);
         verify(taskEventPublisher, times(1)).publishTaskCreatedEvent(any(TaskCreatedEvent.class));
     }
 
     @Test
     void testUpdateTask() {
-        TaskDTO taskDTO = new TaskDTO();
         taskDTO.setStatus(TaskStatus.COMPLETED);
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
 
-        Task updatedTask = taskService.updateTask(1L, taskDTO);
+        TaskDTO updatedTask = taskService.updateTask(1L, taskDTO);
 
         assertNotNull(updatedTask);
         verify(taskMapper, times(1)).updateTaskFromDTO(eq(taskDTO), any(Task.class));
@@ -134,7 +140,11 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(taskRepository.save(task)).thenReturn(task);
 
-        Task completedTask = taskService.completeTask(1L);
+        taskDTO.setStatus(TaskStatus.COMPLETED);
+
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
+
+        TaskDTO completedTask = taskService.completeTask(1L);
 
         assertNotNull(completedTask);
         assertEquals(TaskStatus.COMPLETED, completedTask.getStatus());
@@ -148,7 +158,11 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(taskRepository.save(task)).thenReturn(task);
 
-        Task failedTask = taskService.failTask(1L);
+        taskDTO.setStatus(TaskStatus.FAILED);
+
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
+
+        TaskDTO failedTask = taskService.failTask(1L);
 
         assertNotNull(failedTask);
         assertEquals(TaskStatus.FAILED, failedTask.getStatus());
@@ -161,7 +175,11 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(taskRepository.save(task)).thenReturn(task);
 
-        Task escalatedTask = taskService.escalateTask(1L);
+        taskDTO.setStatus(TaskStatus.ESCALATED);
+
+        when(taskMapper.toDTO(any(Task.class))).thenReturn(taskDTO);
+
+        TaskDTO escalatedTask = taskService.escalateTask(1L);
 
         assertNotNull(escalatedTask);
         assertEquals(TaskStatus.ESCALATED, escalatedTask.getStatus());

@@ -1,63 +1,76 @@
 package com.wolfhack.vetoptim.taskresource.controller;
 
 import com.wolfhack.vetoptim.common.dto.TaskDTO;
-import com.wolfhack.vetoptim.taskresource.model.Task;
-import com.wolfhack.vetoptim.taskresource.service.TaskService;
+import com.wolfhack.vetoptim.taskresource.service.ITaskService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
 
+@Validated
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/api/tasks")
 @RequiredArgsConstructor
+@Tag(name = "Task API", description = "API for managing tasks")
 public class TaskController {
 
-    private final TaskService taskService;
+    private final ITaskService ITaskService;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        return ResponseEntity.ok(taskService.getAllTasks());
+    @Operation(summary = "Fetch all tasks")
+    public ResponseEntity<List<TaskDTO>> getAllTasks() {
+        return ResponseEntity.ok(ITaskService.getAllTasks());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable("id") Long id) {
-        return ResponseEntity.of(taskService.getTaskById(id));
+    @Operation(summary = "Get task by ID")
+    public ResponseEntity<TaskDTO> getTaskById(@PathVariable("id") Long id) {
+        return ResponseEntity.of(ITaskService.getTaskById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        return ResponseEntity.created(URI.create("/tasks/"+task.getId()))
-            .body(taskService.createTask(task));
+    @Operation(summary = "Create a new task")
+    public ResponseEntity<TaskDTO> createTask(@Valid @RequestBody TaskDTO task) {
+        return ResponseEntity.created(
+                URI.create("/tasks/"+task.getId())
+            )
+            .body(ITaskService.createTask(task));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable("id") Long id, @RequestBody TaskDTO taskDTO) {
-        return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
+    @Operation(summary = "Update an existing task")
+    public ResponseEntity<TaskDTO> updateTask(@PathVariable("id") Long id, @Valid @RequestBody TaskDTO taskDTO) {
+        return ResponseEntity.ok(ITaskService.updateTask(id, taskDTO));
     }
 
     @PutMapping("/{id}/complete")
-    public ResponseEntity<Task> completeTask(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(taskService.completeTask(id));
+    @Operation(summary = "Mark a task as completed")
+    public ResponseEntity<TaskDTO> completeTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ITaskService.completeTask(id));
     }
 
     @PutMapping("/{id}/fail")
-    public ResponseEntity<Task> failTask(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(taskService.failTask(id));
+    @Operation(summary = "Mark a task as failed")
+    public ResponseEntity<TaskDTO> failTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ITaskService.failTask(id));
     }
 
     @PutMapping("/{id}/escalate")
-    public ResponseEntity<Task> escalateTask(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(taskService.escalateTask(id));
+    @Operation(summary = "Escalate a task")
+    public ResponseEntity<TaskDTO> escalateTask(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ITaskService.escalateTask(id));
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete a task")
     public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id) {
-        taskService.deleteTask(id);
+        ITaskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }
 }

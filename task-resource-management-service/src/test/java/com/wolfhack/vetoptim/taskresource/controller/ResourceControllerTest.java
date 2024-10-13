@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.controller;
 
-import com.wolfhack.vetoptim.taskresource.model.Resource;
-import com.wolfhack.vetoptim.taskresource.service.ResourceService;
+import com.wolfhack.vetoptim.common.dto.ResourceDTO;
+import com.wolfhack.vetoptim.taskresource.service.IResourceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ResourceControllerTest {
 
     @Mock
-    private ResourceService resourceService;
+    private IResourceService resourceService;
 
     @InjectMocks
     private ResourceController resourceController;
@@ -38,13 +38,13 @@ class ResourceControllerTest {
 
     @Test
     void testGetAllResources() throws Exception {
-        Resource resource = new Resource();
-        resource.setId(1L);
-        resource.setName("Test Resource");
+        ResourceDTO resourceDTO = new ResourceDTO();
+        resourceDTO.setId(1L);
+        resourceDTO.setName("Test Resource");
 
-        when(resourceService.getAllResources()).thenReturn(List.of(resource));
+        when(resourceService.getAllResources()).thenReturn(List.of(resourceDTO));
 
-        mockMvc.perform(get("/resources"))
+        mockMvc.perform(get("/api/resources"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Test Resource"));
 
@@ -53,61 +53,61 @@ class ResourceControllerTest {
 
     @Test
     void testCreateResource() throws Exception {
-        Resource resource = new Resource();
-        resource.setId(1L);
-        resource.setName("Test Resource");
+        ResourceDTO resourceDTO = new ResourceDTO();
+        resourceDTO.setId(1L);
+        resourceDTO.setName("Test Resource");
 
-        when(resourceService.createResource(any(Resource.class))).thenReturn(resource);
+        when(resourceService.createResource(any(ResourceDTO.class))).thenReturn(resourceDTO);
 
-        mockMvc.perform(post("/resources")
+        mockMvc.perform(post("/api/resources")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Test Resource\"}"))
-                .andExpect(status().isOk())
+                .content("{\"name\": \"Test Resource\", \"type\": \"MEDICAL_SUPPLY\", \"quantity\": 10}"))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Test Resource"));
 
-        verify(resourceService, times(1)).createResource(any(Resource.class));
+        verify(resourceService, times(1)).createResource(any(ResourceDTO.class));
     }
 
     @Test
     void testUpdateResource() throws Exception {
-        Resource resource = new Resource();
-        resource.setId(1L);
-        resource.setName("Updated Resource");
+        ResourceDTO resourceDTO = new ResourceDTO();
+        resourceDTO.setId(1L);
+        resourceDTO.setName("Updated Resource");
 
-        when(resourceService.updateResource(anyLong(), any())).thenReturn(resource);
+        when(resourceService.updateResource(anyLong(), any(ResourceDTO.class))).thenReturn(resourceDTO);
 
-        mockMvc.perform(put("/resources/1")
+        mockMvc.perform(put("/api/resources/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Updated Resource\"}"))
+                .content("{\"name\": \"Updated Resource\", \"type\": \"EQUIPMENT\", \"quantity\": 5}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Updated Resource"));
 
-        verify(resourceService, times(1)).updateResource(anyLong(), any());
+        verify(resourceService, times(1)).updateResource(anyLong(), any(ResourceDTO.class));
     }
 
     @Test
     void testPartialUpdateResource() throws Exception {
-        Resource resource = new Resource();
-        resource.setId(1L);
-        resource.setName("Partially Updated Resource");
+        ResourceDTO resourceDTO = new ResourceDTO();
+        resourceDTO.setId(1L);
+        resourceDTO.setName("Partially Updated Resource");
 
-        when(resourceService.partialUpdateResource(anyLong(), any())).thenReturn(resource);
+        when(resourceService.partialUpdateResource(anyLong(), any(ResourceDTO.class))).thenReturn(resourceDTO);
 
-        mockMvc.perform(patch("/resources/1")
+        mockMvc.perform(patch("/api/resources/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\": \"Partially Updated Resource\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("Partially Updated Resource"));
 
-        verify(resourceService, times(1)).partialUpdateResource(anyLong(), any());
+        verify(resourceService, times(1)).partialUpdateResource(anyLong(), any(ResourceDTO.class));
     }
 
     @Test
     void testDeleteResource() throws Exception {
-        mockMvc.perform(delete("/resources/1"))
+        mockMvc.perform(delete("/api/resources/1"))
                 .andExpect(status().isNoContent());
 
         verify(resourceService, times(1)).deleteResource(1L);

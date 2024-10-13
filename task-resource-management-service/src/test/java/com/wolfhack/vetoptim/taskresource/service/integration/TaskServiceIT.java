@@ -2,8 +2,8 @@ package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
-import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCreatedEvent;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
@@ -99,9 +99,9 @@ class TaskServiceIT {
 
         doNothing().when(taskEventPublisher).publishTaskCreatedEvent(any());
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/api/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{ \"petId\": 1, \"taskType\": \"SURGERY\", \"description\": \"Routine surgery for pet\" }"))
+                .content("{ \"petId\": 1, \"taskType\": \"SURGERY\", \"description\": \"Routine surgery for pet\", \"deadline\": \"3024-10-13T17:07:52\", \"status\": \"PENDING\" }"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.petId").value(1))
             .andExpect(jsonPath("$.taskType").value("SURGERY"))
@@ -130,7 +130,7 @@ class TaskServiceIT {
 
         doNothing().when(taskEventPublisher).publishTaskCompletedEvent(any());
 
-        mockMvc.perform(put("/tasks/{id}/complete", task.getId())
+        mockMvc.perform(put("/api/tasks/{id}/complete", task.getId())
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("COMPLETED"));
@@ -152,7 +152,7 @@ class TaskServiceIT {
         task.setStatus(TaskStatus.IN_PROGRESS);
         task = taskRepository.save(task);
 
-        mockMvc.perform(get("/tasks/{id}", task.getId())
+        mockMvc.perform(get("/api/tasks/{id}", task.getId())
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(task.getId()))
@@ -168,7 +168,7 @@ class TaskServiceIT {
         task.setStatus(TaskStatus.IN_PROGRESS);
         task = taskRepository.save(task);
 
-        mockMvc.perform(delete("/tasks/{id}", task.getId())
+        mockMvc.perform(delete("/api/tasks/{id}", task.getId())
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
