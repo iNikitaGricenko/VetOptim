@@ -1,8 +1,12 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
+import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
 import com.wolfhack.vetoptim.petmanagement.event.EmergencyTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.event.FollowUpTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.event.MedicalTaskEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.exception.MedicalRecordNotFoundException;
+import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
+import com.wolfhack.vetoptim.petmanagement.mapper.MedicalRecordMapper;
 import com.wolfhack.vetoptim.petmanagement.model.MedicalRecord;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.repository.MedicalRecordRepository;
@@ -39,11 +43,15 @@ class MedicalRecordServiceTest {
     @Mock
     private FollowUpTaskEventPublisher followUpTaskEventPublisher;
 
+    @Mock
+    private MedicalRecordMapper medicalRecordMapper;
+
     @InjectMocks
     private MedicalRecordService medicalRecordService;
 
     private Pet pet;
     private MedicalRecord medicalRecord;
+    private MedicalRecordDTO medicalRecordDTO;
 
     @BeforeEach
     void setUp() {
@@ -54,28 +62,34 @@ class MedicalRecordServiceTest {
 
         medicalRecord = new MedicalRecord();
         medicalRecord.setId(1L);
-        medicalRecord.setDiagnosis("Surgery");
-        medicalRecord.setTreatment("Post-surgery care");
+        medicalRecord.setDiagnosis("Critical condition");
+        medicalRecord.setTreatment("Emergency treatment");
         medicalRecord.setDateOfTreatment(LocalDate.now());
         medicalRecord.setPet(pet);
+
+        medicalRecordDTO = new MedicalRecordDTO(1L, "Critical condition", "Emergency treatment", LocalDate.now(), pet.getId());
     }
 
     @Test
     void testGetMedicalHistoryForPet() {
         when(medicalRecordRepository.findAllByPetId(pet.getId())).thenReturn(List.of(medicalRecord));
+        when(medicalRecordMapper.toDTO(any(MedicalRecord.class))).thenReturn(medicalRecordDTO);
 
-        List<MedicalRecord> result = medicalRecordService.getMedicalHistoryForPet(pet.getId());
+        List<MedicalRecordDTO> result = medicalRecordService.getMedicalHistoryForPet(pet.getId());
 
         assertEquals(1, result.size());
         verify(medicalRecordRepository).findAllByPetId(pet.getId());
+        verify(medicalRecordMapper).toDTO(any(MedicalRecord.class));
     }
 
     @Test
     void testCreateMedicalRecord_Success() {
         when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
         when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
+        when(medicalRecordMapper.toModel(any(MedicalRecordDTO.class))).thenReturn(medicalRecord);
+        when(medicalRecordMapper.toDTO(any(MedicalRecord.class))).thenReturn(medicalRecordDTO);
 
-        MedicalRecord result = medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
+        MedicalRecordDTO result = medicalRecordService.createMedicalRecord(pet.getId(), medicalRecordDTO);
 
         assertNotNull(result);
         verify(medicalRecordRepository).save(medicalRecord);
@@ -87,11 +101,11 @@ class MedicalRecordServiceTest {
     void testCreateMedicalRecord_Failure_PetNotFound() {
         when(petRepository.findById(pet.getId())).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
+        PetNotFoundException exception = assertThrows(PetNotFoundException.class, () -> {
+            medicalRecordService.createMedicalRecord(pet.getId(), medicalRecordDTO);
         });
 
-        assertEquals("Pet not found", exception.getMessage());
+        assertEquals("Pet not found with ID: " + pet.getId(), exception.getMessage());
         verify(medicalRecordRepository, never()).save(any());
         verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
     }
@@ -112,11 +126,11 @@ class MedicalRecordServiceTest {
     void testCreateMedicalRecordFromAppointment_Failure_PetNotFound() {
         when(petRepository.findById(pet.getId())).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        PetNotFoundException exception = assertThrows(PetNotFoundException.class, () -> {
             medicalRecordService.createMedicalRecordFromAppointment(pet.getId(), "Diagnosis", "Treatment");
         });
 
-        assertEquals("Pet not found", exception.getMessage());
+        assertEquals("Pet not found with ID: " + pet.getId(), exception.getMessage());
         verify(medicalRecordRepository, never()).save(any());
         verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
     }
@@ -124,14 +138,15 @@ class MedicalRecordServiceTest {
     @Test
     void testUpdateMedicalRecord_Success() {
         Long recordId = 1L;
-        MedicalRecord updatedRecord = new MedicalRecord();
-        updatedRecord.setDiagnosis("Critical surgery");
-        updatedRecord.setTreatment("Follow-up treatment");
+        MedicalRecordDTO updatedRecordDTO = new MedicalRecordDTO();
+        updatedRecordDTO.setDiagnosis("Critical surgery");
+        updatedRecordDTO.setTreatment("Follow-up treatment");
 
         when(medicalRecordRepository.findById(recordId)).thenReturn(Optional.of(medicalRecord));
-        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(updatedRecord);
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
+        when(medicalRecordMapper.toDTO(any(MedicalRecord.class))).thenReturn(updatedRecordDTO);
 
-        MedicalRecord result = medicalRecordService.updateMedicalRecord(recordId, updatedRecord);
+        MedicalRecordDTO result = medicalRecordService.updateMedicalRecord(recordId, updatedRecordDTO);
 
         assertEquals("Critical surgery", result.getDiagnosis());
         verify(medicalRecordRepository).save(any(MedicalRecord.class));
@@ -145,11 +160,11 @@ class MedicalRecordServiceTest {
         Long recordId = 1L;
         when(medicalRecordRepository.findById(recordId)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            medicalRecordService.updateMedicalRecord(recordId, medicalRecord);
+        MedicalRecordNotFoundException exception = assertThrows(MedicalRecordNotFoundException.class, () -> {
+            medicalRecordService.updateMedicalRecord(recordId, medicalRecordDTO);
         });
 
-        assertEquals("Medical record not found", exception.getMessage());
+        assertEquals("Medical record not found with ID: " + recordId, exception.getMessage());
         verify(medicalRecordRepository, never()).save(any());
         verify(medicalTaskEventPublisher, never()).publishMedicalTaskCreationEvent(any());
     }
@@ -166,24 +181,26 @@ class MedicalRecordServiceTest {
 
     @Test
     void testCriticalConditionTriggersEmergencyTask() {
-        medicalRecord.setDiagnosis("Critical condition");
-
         when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordMapper.toModel(any(MedicalRecordDTO.class))).thenReturn(medicalRecord);
         when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
+        when(medicalRecordMapper.toDTO(any(MedicalRecord.class))).thenReturn(medicalRecordDTO);
 
-        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
+        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecordDTO);
 
         verify(emergencyTaskEventPublisher).publishEmergencyTaskCreationEvent(any());
     }
 
     @Test
     void testFollowUpRequiredTriggersFollowUpTask() {
-        medicalRecord.setDiagnosis("Surgery required");
+        medicalRecordDTO.setDiagnosis("Surgery required");
 
         when(petRepository.findById(pet.getId())).thenReturn(Optional.of(pet));
+        when(medicalRecordMapper.toModel(any(MedicalRecordDTO.class))).thenReturn(medicalRecord);
         when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(medicalRecord);
+        when(medicalRecordMapper.toDTO(any(MedicalRecord.class))).thenReturn(medicalRecordDTO);
 
-        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecord);
+        medicalRecordService.createMedicalRecord(pet.getId(), medicalRecordDTO);
 
         verify(followUpTaskEventPublisher).publishFollowUpTaskCreationEvent(any());
     }

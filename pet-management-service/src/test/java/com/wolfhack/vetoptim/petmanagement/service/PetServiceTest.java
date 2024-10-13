@@ -1,9 +1,12 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
 import com.wolfhack.vetoptim.common.dto.AppointmentDTO;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.petmanagement.client.OwnerClient;
 import com.wolfhack.vetoptim.petmanagement.event.AppointmentTaskEventPublisher;
 import com.wolfhack.vetoptim.petmanagement.event.PetEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.exception.OwnerNotFoundException;
+import com.wolfhack.vetoptim.petmanagement.exception.PetNotFoundException;
 import com.wolfhack.vetoptim.petmanagement.mapper.PetMapper;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
@@ -19,7 +22,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 class PetServiceTest {
@@ -43,6 +45,7 @@ class PetServiceTest {
     private PetService petService;
 
     private Pet pet;
+    private PetDTO petDTO;
     private AppointmentDTO appointmentDTO;
 
     @BeforeEach
@@ -51,6 +54,8 @@ class PetServiceTest {
         pet.setId(1L);
         pet.setName("Buddy");
         pet.setOwnerId(1L);
+
+        petDTO = new PetDTO(1L, "Buddy", "Dog", "Labrador", 5, "Healthy", "John Doe", 1L);
 
         appointmentDTO = new AppointmentDTO();
         appointmentDTO.setId(1L);
@@ -61,51 +66,76 @@ class PetServiceTest {
     @Test
     void testGetAllPets() {
         when(petRepository.findAll()).thenReturn(List.of(pet));
-        List<Pet> pets = petService.getAllPets();
+        when(petMapper.toDTO(any(Pet.class))).thenReturn(petDTO);
+
+        List<PetDTO> pets = petService.getAllPets();
+
         assertEquals(1, pets.size());
         verify(petRepository).findAll();
+        verify(petMapper).toDTO(any(Pet.class));
     }
 
     @Test
     void testGetPetById_Success() {
         Long petId = 1L;
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
+        when(petMapper.toDTO(any(Pet.class))).thenReturn(petDTO);
 
-        Optional<Pet> foundPet = petService.getPetById(petId);
+        Optional<PetDTO> foundPet = petService.getPetById(petId);
 
         assertTrue(foundPet.isPresent());
         assertEquals(petId, foundPet.get().getId());
         verify(petRepository).findById(petId);
+        verify(petMapper).toDTO(any(Pet.class));
+    }
+
+    @Test
+    void testGetPetById_Failure_PetNotFound() {
+        Long petId = 1L;
+        when(petRepository.findById(petId)).thenReturn(Optional.empty());
+
+        PetNotFoundException exception = assertThrows(PetNotFoundException.class, () -> {
+            petService.getPetById(petId);
+        });
+
+        assertEquals("Pet not found with ID: " + petId, exception.getMessage());
+        verify(petRepository).findById(petId);
+        verify(petMapper, never()).toDTO(any());
     }
 
     @Test
     void testGetAllPetsByOwnerId() {
         Long ownerId = 1L;
         when(petRepository.findAllByOwnerId(ownerId)).thenReturn(List.of(pet));
+        when(petMapper.toDTO(any(Pet.class))).thenReturn(petDTO);
 
-        List<Pet> pets = petService.getAllPetsByOwnerId(ownerId);
+        List<PetDTO> pets = petService.getAllPetsByOwnerId(ownerId);
 
         assertEquals(1, pets.size());
         verify(petRepository).findAllByOwnerId(ownerId);
+        verify(petMapper).toDTO(any(Pet.class));
     }
 
     @Test
     void testCreatePet_Success() {
         when(ownerClient.ownerExists(pet.getOwnerId())).thenReturn(true);
+        when(petMapper.toModel(any(PetDTO.class))).thenReturn(pet);
         when(petRepository.save(any(Pet.class))).thenReturn(pet);
+        when(petMapper.toDTO(any(Pet.class))).thenReturn(petDTO);
 
-        Pet savedPet = petService.createPet(pet);
+        PetDTO savedPet = petService.createPet(petDTO);
 
         verify(petRepository).save(pet);
         verify(petEventPublisher).publishPetCreatedEvent(any());
         assertNotNull(savedPet);
+        assertEquals(petDTO.getName(), savedPet.getName());
     }
 
     @Test
     void testCreatePet_Failure_OwnerNotFound() {
         when(ownerClient.ownerExists(pet.getOwnerId())).thenReturn(false);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> petService.createPet(pet));
+        OwnerNotFoundException exception = assertThrows(OwnerNotFoundException.class, () -> petService.createPet(petDTO));
 
         assertEquals("Owner not found with ID: " + pet.getOwnerId(), exception.getMessage());
         verify(petRepository, never()).save(any());
@@ -115,14 +145,15 @@ class PetServiceTest {
     @Test
     void testUpdatePet_Success() {
         Long petId = 1L;
-        Pet updatedPet = new Pet();
-        updatedPet.setId(petId);
-        updatedPet.setName("Max");
+        PetDTO updatedPetDTO = new PetDTO();
+        updatedPetDTO.setId(petId);
+        updatedPetDTO.setName("Max");
 
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
-        when(petRepository.save(any(Pet.class))).thenReturn(updatedPet);
+        when(petRepository.save(any(Pet.class))).thenReturn(pet);
+        when(petMapper.toDTO(any(Pet.class))).thenReturn(updatedPetDTO);
 
-        Pet result = petService.updatePet(petId, updatedPet);
+        PetDTO result = petService.updatePet(petId, updatedPetDTO);
 
         verify(petRepository).save(pet);
         verify(petEventPublisher).publishPetUpdatedEvent(any());
@@ -134,9 +165,9 @@ class PetServiceTest {
         Long petId = 1L;
         when(petRepository.findById(petId)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> petService.updatePet(petId, pet));
+        PetNotFoundException exception = assertThrows(PetNotFoundException.class, () -> petService.updatePet(petId, petDTO));
 
-        assertEquals("Pet not found", exception.getMessage());
+        assertEquals("Pet not found with ID: " + petId, exception.getMessage());
         verify(petRepository, never()).save(any());
         verify(petEventPublisher, never()).publishPetUpdatedEvent(any());
     }
@@ -165,6 +196,18 @@ class PetServiceTest {
 
         verify(petRepository).deleteById(petId);
         verify(petEventPublisher).publishPetDeletedEvent(any());
+    }
+
+    @Test
+    void testDeletePet_Failure_PetNotFound() {
+        Long petId = 1L;
+        when(petRepository.findById(petId)).thenReturn(Optional.empty());
+
+        PetNotFoundException exception = assertThrows(PetNotFoundException.class, () -> petService.deletePet(petId));
+
+        assertEquals("Pet not found with ID: " + petId, exception.getMessage());
+        verify(petRepository, never()).deleteById(any());
+        verify(petEventPublisher, never()).publishPetDeletedEvent(any());
     }
 
     @Test

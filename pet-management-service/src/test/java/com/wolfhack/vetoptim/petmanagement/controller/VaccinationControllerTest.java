@@ -1,6 +1,7 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
-import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
 import com.wolfhack.vetoptim.petmanagement.service.VaccinationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDate;
 import java.util.Collections;
 
 import static org.mockito.Mockito.*;
@@ -39,7 +41,7 @@ class VaccinationControllerTest {
     void testGetVaccinationsForPet() throws Exception {
         when(vaccinationService.getVaccinationsForPet(1L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/vaccinations/pet/1"))
+        mockMvc.perform(get("/api/vaccinations/pet/1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -48,36 +50,35 @@ class VaccinationControllerTest {
 
     @Test
     void testCreateVaccination() throws Exception {
-        Vaccination vaccination = new Vaccination();
-        when(vaccinationService.createVaccination(anyLong(), any(Vaccination.class))).thenReturn(vaccination);
+        VaccinationResponseDTO vaccinationResponseDTO = new VaccinationResponseDTO(1L, "Rabies", LocalDate.now(), LocalDate.now().plusMonths(6), 1L);
+        when(vaccinationService.createVaccination(anyLong(), any(VaccinationRequestDTO.class))).thenReturn(vaccinationResponseDTO);
 
-        mockMvc.perform(post("/vaccinations/pet/1")
+        mockMvc.perform(post("/api/vaccinations/pet/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"vaccineName\": \"Rabies\"}"))
-            .andExpect(status().isOk());
+                .content("{\"vaccineName\": \"Rabies\", \"vaccinationDate\": \"2023-10-01\", \"nextDueDate\": \"3024-04-01\"}"))
+            .andExpect(status().isCreated());
 
-        verify(vaccinationService).createVaccination(anyLong(), any(Vaccination.class));
+        verify(vaccinationService).createVaccination(anyLong(), any(VaccinationRequestDTO.class));
     }
 
     @Test
     void testUpdateVaccination() throws Exception {
-        Vaccination vaccination = new Vaccination();
-        when(vaccinationService.updateVaccination(anyLong(), any(Vaccination.class))).thenReturn(vaccination);
+        VaccinationResponseDTO vaccinationResponseDTO = new VaccinationResponseDTO(1L, "Rabies", LocalDate.now(), LocalDate.now().plusMonths(6), 1L);
+        when(vaccinationService.updateVaccination(anyLong(), any(VaccinationRequestDTO.class))).thenReturn(vaccinationResponseDTO);
 
-        mockMvc.perform(put("/vaccinations/1")
+        mockMvc.perform(put("/api/vaccinations/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"vaccineName\": \"Rabies\"}"))
+                .content("{\"vaccineName\": \"Rabies\", \"vaccinationDate\": \"2023-10-01\", \"nextDueDate\": \"3024-04-01\"}"))
             .andExpect(status().isOk());
 
-        verify(vaccinationService).updateVaccination(anyLong(), any(Vaccination.class));
+        verify(vaccinationService).updateVaccination(anyLong(), any(VaccinationRequestDTO.class));
     }
 
     @Test
     void testDeleteVaccination() throws Exception {
-        mockMvc.perform(delete("/vaccinations/1"))
+        mockMvc.perform(delete("/api/vaccinations/1"))
             .andExpect(status().isNoContent());
 
         verify(vaccinationService).deleteVaccination(1L);
     }
-
 }

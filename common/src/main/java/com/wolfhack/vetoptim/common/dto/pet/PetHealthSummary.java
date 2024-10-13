@@ -1,4 +1,4 @@
-package com.wolfhack.vetoptim.common.dto;
+package com.wolfhack.vetoptim.common.dto.pet;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

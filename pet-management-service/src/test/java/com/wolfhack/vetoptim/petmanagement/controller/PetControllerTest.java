@@ -1,6 +1,6 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
-import com.wolfhack.vetoptim.petmanagement.model.Pet;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.petmanagement.service.PetHealthAnalyticsService;
 import com.wolfhack.vetoptim.petmanagement.service.PetService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ class PetControllerTest {
     void testGetAllPets() throws Exception {
         when(petService.getAllPets()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/pets"))
+        mockMvc.perform(get("/api/pets"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -54,9 +54,9 @@ class PetControllerTest {
 
     @Test
     void testGetPetById() throws Exception {
-        when(petService.getPetById(1L)).thenReturn(Optional.of(new Pet()));
+        when(petService.getPetById(1L)).thenReturn(Optional.of(new PetDTO()));
 
-        mockMvc.perform(get("/pets/1"))
+        mockMvc.perform(get("/api/pets/1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -67,7 +67,7 @@ class PetControllerTest {
     void testGetPetsByOwnerId() throws Exception {
         when(petService.getAllPetsByOwnerId(1L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/pets/owner/1"))
+        mockMvc.perform(get("/api/pets/owner/1"))
             .andExpect(status().isOk());
 
         verify(petService).getAllPetsByOwnerId(1L);
@@ -75,33 +75,33 @@ class PetControllerTest {
 
     @Test
     void testCreatePet() throws Exception {
-        Pet pet = new Pet();
-        when(petService.createPet(any(Pet.class))).thenReturn(pet);
+        PetDTO pet = new PetDTO();
+        when(petService.createPet(any(PetDTO.class))).thenReturn(pet);
 
-        mockMvc.perform(post("/pets")
+        mockMvc.perform(post("/api/pets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\": \"Buddy\"}"))
-            .andExpect(status().isOk());
+            .andExpect(status().isCreated());
 
-        verify(petService).createPet(any(Pet.class));
+        verify(petService).createPet(any(PetDTO.class));
     }
 
     @Test
     void testUpdatePet() throws Exception {
-        Pet pet = new Pet();
-        when(petService.updatePet(anyLong(), any(Pet.class))).thenReturn(pet);
+        PetDTO pet = new PetDTO();
+        when(petService.updatePet(anyLong(), any(PetDTO.class))).thenReturn(pet);
 
-        mockMvc.perform(put("/pets/1")
+        mockMvc.perform(put("/api/pets/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\": \"Buddy\"}"))
             .andExpect(status().isOk());
 
-        verify(petService).updatePet(anyLong(), any(Pet.class));
+        verify(petService).updatePet(anyLong(), any(PetDTO.class));
     }
 
     @Test
     void testDeletePet() throws Exception {
-        mockMvc.perform(delete("/pets/1"))
+        mockMvc.perform(delete("/api/pets/1"))
             .andExpect(status().isNoContent());
 
         verify(petService).deletePet(1L);

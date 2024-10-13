@@ -1,6 +1,6 @@
 package com.wolfhack.vetoptim.petmanagement.controller;
 
-import com.wolfhack.vetoptim.petmanagement.model.MedicalRecord;
+import com.wolfhack.vetoptim.common.dto.pet.MedicalRecordDTO;
 import com.wolfhack.vetoptim.petmanagement.service.MedicalRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class MedicalRecordControllerTest {
     void testGetMedicalHistory() throws Exception {
         when(medicalRecordService.getMedicalHistoryForPet(1L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/pets/1/medical-records"))
+        mockMvc.perform(get("/api/pets/1/medical-records"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
@@ -48,33 +48,33 @@ class MedicalRecordControllerTest {
 
     @Test
     void testCreateMedicalRecord() throws Exception {
-        MedicalRecord medicalRecord = new MedicalRecord();
-        when(medicalRecordService.createMedicalRecord(anyLong(), any(MedicalRecord.class))).thenReturn(medicalRecord);
+        MedicalRecordDTO medicalRecord = new MedicalRecordDTO();
+        when(medicalRecordService.createMedicalRecord(anyLong(), any(MedicalRecordDTO.class))).thenReturn(medicalRecord);
 
-        mockMvc.perform(post("/pets/1/medical-records")
+        mockMvc.perform(post("/api/pets/1/medical-records")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"diagnosis\": \"test\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
-        verify(medicalRecordService).createMedicalRecord(anyLong(), any(MedicalRecord.class));
+        verify(medicalRecordService).createMedicalRecord(anyLong(), any(MedicalRecordDTO.class));
     }
 
     @Test
     void testUpdateMedicalRecord() throws Exception {
-        MedicalRecord updatedRecord = new MedicalRecord();
-        when(medicalRecordService.updateMedicalRecord(anyLong(), any(MedicalRecord.class))).thenReturn(updatedRecord);
+        MedicalRecordDTO updatedRecord = new MedicalRecordDTO();
+        when(medicalRecordService.updateMedicalRecord(anyLong(), any(MedicalRecordDTO.class))).thenReturn(updatedRecord);
 
-        mockMvc.perform(put("/pets/1/medical-records/1")
+        mockMvc.perform(put("/api/pets/1/medical-records/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"diagnosis\": \"test\"}"))
                 .andExpect(status().isOk());
 
-        verify(medicalRecordService).updateMedicalRecord(anyLong(), any(MedicalRecord.class));
+        verify(medicalRecordService).updateMedicalRecord(anyLong(), any(MedicalRecordDTO.class));
     }
 
     @Test
     void testDeleteMedicalRecord() throws Exception {
-        mockMvc.perform(delete("/pets/1/medical-records/1"))
+        mockMvc.perform(delete("/api/pets/1/medical-records/1"))
                 .andExpect(status().isNoContent());
 
         verify(medicalRecordService).deleteMedicalRecord(1L);

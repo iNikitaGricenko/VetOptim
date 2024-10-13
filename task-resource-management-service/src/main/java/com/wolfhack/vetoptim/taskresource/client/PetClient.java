@@ -1,6 +1,6 @@
 package com.wolfhack.vetoptim.taskresource.client;
 
-import com.wolfhack.vetoptim.common.dto.PetDTO;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

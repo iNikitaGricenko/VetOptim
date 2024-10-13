@@ -1,7 +1,10 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
 import com.wolfhack.vetoptim.common.event.vaccination.VaccinationReminderEvent;
 import com.wolfhack.vetoptim.petmanagement.event.VaccinationEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.mapper.VaccinationMapper;
 import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
 import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
 import com.wolfhack.vetoptim.petmanagement.repository.VaccinationRepository;
@@ -19,73 +22,55 @@ public class VaccinationService {
 
     private final VaccinationRepository vaccinationRepository;
     private final PetRepository petRepository;
+    private final VaccinationMapper vaccinationMapper;
+
     private final VaccinationEventPublisher vaccinationEventPublisher;
 
-    public List<Vaccination> getVaccinationsForPet(Long petId) {
+    public List<VaccinationResponseDTO> getVaccinationsForPet(Long petId) {
         log.info("Fetching vaccinations for Pet ID: {}", petId);
-        return vaccinationRepository.findAllByPetId(petId);
+        return vaccinationRepository.findAllByPetId(petId).stream()
+            .map(vaccinationMapper::toDTO)
+            .toList();
     }
 
-    public Vaccination createVaccination(Long petId, Vaccination vaccination) {
+    public VaccinationResponseDTO createVaccination(Long petId, VaccinationRequestDTO vaccinationRequestDTO) {
         log.info("Creating vaccination for Pet ID: {}", petId);
         return petRepository.findById(petId)
             .map(pet -> {
+                Vaccination vaccination = vaccinationMapper.toModel(vaccinationRequestDTO);
                 vaccination.setPet(pet);
                 Vaccination savedVaccination = vaccinationRepository.save(vaccination);
-                log.debug("Vaccination created with ID: {} for Pet ID: {}", savedVaccination.getId(), petId);
 
-                if (vaccination.getNextDueDate().isBefore(LocalDate.now())) {
-                    log.info("Vaccination is overdue for Pet ID: {}. Publishing reminder event.", petId);
+                if (savedVaccination.getNextDueDate().isBefore(LocalDate.now())) {
                     vaccinationEventPublisher.publishVaccinationReminderEvent(
-                        new VaccinationReminderEvent(petId, pet.getName(), pet.getOwnerId(),
-                            vaccination.getVaccineName(), "overdue"));
-                } else if (vaccination.getNextDueDate().isBefore(LocalDate.now().plusWeeks(1))) {
-                    log.info("Vaccination is upcoming for Pet ID: {}. Publishing reminder event.", petId);
+                        new VaccinationReminderEvent(petId, pet.getName(), pet.getOwnerId(), vaccination.getVaccineName(), "overdue"));
+                } else if (savedVaccination.getNextDueDate().isBefore(LocalDate.now().plusWeeks(1))) {
                     vaccinationEventPublisher.publishVaccinationReminderEvent(
-                        new VaccinationReminderEvent(petId, pet.getName(), pet.getOwnerId(),
-                            vaccination.getVaccineName(), "upcoming"));
+                        new VaccinationReminderEvent(petId, pet.getName(), pet.getOwnerId(), vaccination.getVaccineName(), "upcoming"));
                 }
 
-                return savedVaccination;
+                return vaccinationMapper.toDTO(savedVaccination);
             })
-            .orElseThrow(() -> {
-                log.error("Pet not found with ID: {}", petId);
-                return new RuntimeException("Pet not found");
-            });
+            .orElseThrow(() -> new RuntimeException("Pet not found"));
     }
 
-    public Vaccination updateVaccination(Long vaccinationId, Vaccination vaccinationDetails) {
+    public VaccinationResponseDTO updateVaccination(Long vaccinationId, VaccinationRequestDTO vaccinationRequestDTO) {
         log.info("Updating vaccination with ID: {}", vaccinationId);
         return vaccinationRepository.findById(vaccinationId)
             .map(existingVaccination -> {
-                existingVaccination.setVaccineName(vaccinationDetails.getVaccineName());
-                existingVaccination.setVaccinationDate(vaccinationDetails.getVaccinationDate());
-                existingVaccination.setNextDueDate(vaccinationDetails.getNextDueDate());
+                vaccinationMapper.updateModelFromDTO(vaccinationRequestDTO, existingVaccination);
+                Vaccination updatedVaccination = vaccinationRepository.save(existingVaccination);
 
-                log.info("Vaccination updated with ID: {}", existingVaccination.getId());
-
-                if (existingVaccination.getNextDueDate().isBefore(LocalDate.now())) {
-                    log.info("Vaccination is overdue for Pet ID: {}. Publishing reminder event.", existingVaccination.getPet().getId());
+                if (updatedVaccination.getNextDueDate().isBefore(LocalDate.now())) {
                     vaccinationEventPublisher.publishVaccinationReminderEvent(
-                        new VaccinationReminderEvent(existingVaccination.getPet().getId(),
-                            existingVaccination.getPet().getName(),
-                            existingVaccination.getPet().getOwnerId(),
-                            existingVaccination.getVaccineName(), "overdue"));
-                } else if (existingVaccination.getNextDueDate().isBefore(LocalDate.now().plusWeeks(1))) {
-                    log.info("Vaccination is upcoming for Pet ID: {}. Publishing reminder event.", existingVaccination.getPet().getId());
-                    vaccinationEventPublisher.publishVaccinationReminderEvent(
-                        new VaccinationReminderEvent(existingVaccination.getPet().getId(),
-                            existingVaccination.getPet().getName(),
-                            existingVaccination.getPet().getOwnerId(),
-                            existingVaccination.getVaccineName(), "upcoming"));
+                        new VaccinationReminderEvent(updatedVaccination.getPet().getId(),
+                            updatedVaccination.getPet().getName(), updatedVaccination.getPet().getOwnerId(),
+                            updatedVaccination.getVaccineName(), "overdue"));
                 }
 
-                return vaccinationRepository.save(existingVaccination);
+                return vaccinationMapper.toDTO(updatedVaccination);
             })
-            .orElseThrow(() -> {
-                log.error("Vaccination not found with ID: {}", vaccinationId);
-                return new RuntimeException("Vaccination not found");
-            });
+            .orElseThrow(() -> new RuntimeException("Vaccination not found"));
     }
 
     public void deleteVaccination(Long vaccinationId) {

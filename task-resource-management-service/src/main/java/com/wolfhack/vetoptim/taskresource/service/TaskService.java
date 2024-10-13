@@ -1,7 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.service;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
-import com.wolfhack.vetoptim.common.dto.PetDTO;
+import com.wolfhack.vetoptim.common.dto.pet.PetDTO;
 import com.wolfhack.vetoptim.common.dto.TaskDTO;
 import com.wolfhack.vetoptim.common.dto.billing.TaskBillingRequest;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;

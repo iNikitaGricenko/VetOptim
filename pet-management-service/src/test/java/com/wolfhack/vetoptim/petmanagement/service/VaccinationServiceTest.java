@@ -1,7 +1,10 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationRequestDTO;
+import com.wolfhack.vetoptim.common.dto.pet.VaccinationResponseDTO;
 import com.wolfhack.vetoptim.common.event.vaccination.VaccinationReminderEvent;
 import com.wolfhack.vetoptim.petmanagement.event.VaccinationEventPublisher;
+import com.wolfhack.vetoptim.petmanagement.mapper.VaccinationMapper;
 import com.wolfhack.vetoptim.petmanagement.model.Pet;
 import com.wolfhack.vetoptim.petmanagement.model.Vaccination;
 import com.wolfhack.vetoptim.petmanagement.repository.PetRepository;
@@ -33,11 +36,15 @@ class VaccinationServiceTest {
     @Mock
     private VaccinationEventPublisher vaccinationEventPublisher;
 
+    @Mock
+    private VaccinationMapper vaccinationMapper;
+
     @InjectMocks
     private VaccinationService vaccinationService;
 
     private Pet pet;
     private Vaccination vaccination;
+    private VaccinationResponseDTO responseDTO;
 
     @BeforeEach
     void setUp() {
@@ -47,10 +54,13 @@ class VaccinationServiceTest {
         pet.setOwnerId(100L);
 
         vaccination = new Vaccination();
+        vaccination.setId(1L);
         vaccination.setPet(pet);
         vaccination.setVaccineName("Rabies");
         vaccination.setVaccinationDate(LocalDate.now());
         vaccination.setNextDueDate(LocalDate.now().plusMonths(6));
+
+        responseDTO = new VaccinationResponseDTO(1L, "Rabies", LocalDate.now(), LocalDate.now().plusMonths(6), 1L);
     }
 
     @Test
@@ -59,11 +69,12 @@ class VaccinationServiceTest {
         List<Vaccination> vaccinations = List.of(vaccination);
 
         when(vaccinationRepository.findAllByPetId(petId)).thenReturn(vaccinations);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        List<Vaccination> result = vaccinationService.getVaccinationsForPet(petId);
+        List<VaccinationResponseDTO> result = vaccinationService.getVaccinationsForPet(petId);
 
         assertEquals(1, result.size());
-        assertEquals("Rabies", result.get(0).getVaccineName());
+        assertEquals("Rabies", result.getFirst().getVaccineName());
 
         verify(vaccinationRepository).findAllByPetId(petId);
     }
@@ -71,28 +82,32 @@ class VaccinationServiceTest {
     @Test
     void testCreateVaccination_Success() {
         Long petId = 1L;
+        VaccinationRequestDTO requestDTO = new VaccinationRequestDTO("Rabies", LocalDate.now(), LocalDate.now().plusMonths(6));
 
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
+        when(vaccinationMapper.toModel(any(VaccinationRequestDTO.class))).thenReturn(vaccination);
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        Vaccination savedVaccination = vaccinationService.createVaccination(petId, vaccination);
+        VaccinationResponseDTO savedVaccination = vaccinationService.createVaccination(petId, requestDTO);
 
         assertEquals("Rabies", savedVaccination.getVaccineName());
         verify(vaccinationRepository).save(vaccination);
         verify(vaccinationEventPublisher, never()).publishVaccinationReminderEvent(any());
-
-        verifyNoMoreInteractions(vaccinationEventPublisher);
     }
 
     @Test
     void testCreateVaccination_UpcomingReminder() {
         Long petId = 1L;
+        VaccinationRequestDTO requestDTO = new VaccinationRequestDTO("Rabies", LocalDate.now(), LocalDate.now().plusDays(3));
         vaccination.setNextDueDate(LocalDate.now().plusDays(3));
 
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
+        when(vaccinationMapper.toModel(any(VaccinationRequestDTO.class))).thenReturn(vaccination);
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        vaccinationService.createVaccination(petId, vaccination);
+        vaccinationService.createVaccination(petId, requestDTO);
 
         verify(vaccinationEventPublisher).publishVaccinationReminderEvent(any(VaccinationReminderEvent.class));
     }
@@ -100,12 +115,15 @@ class VaccinationServiceTest {
     @Test
     void testCreateVaccination_OverdueReminder() {
         Long petId = 1L;
+        VaccinationRequestDTO requestDTO = new VaccinationRequestDTO("Rabies", LocalDate.now(), LocalDate.now().minusDays(1));
         vaccination.setNextDueDate(LocalDate.now().minusDays(1));
 
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
+        when(vaccinationMapper.toModel(any(VaccinationRequestDTO.class))).thenReturn(vaccination);
         when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        vaccinationService.createVaccination(petId, vaccination);
+        vaccinationService.createVaccination(petId, requestDTO);
 
         verify(vaccinationEventPublisher).publishVaccinationReminderEvent(any(VaccinationReminderEvent.class));
     }
@@ -113,48 +131,44 @@ class VaccinationServiceTest {
     @Test
     void testCreateVaccination_PetNotFound() {
         Long petId = 1L;
+        VaccinationRequestDTO requestDTO = new VaccinationRequestDTO("Rabies", LocalDate.now(), LocalDate.now().plusMonths(6));
 
         when(petRepository.findById(petId)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            vaccinationService.createVaccination(petId, vaccination);
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> vaccinationService.createVaccination(petId, requestDTO));
 
         assertEquals("Pet not found", exception.getMessage());
-
         verify(petRepository).findById(petId);
-        verifyNoMoreInteractions(vaccinationRepository, vaccinationEventPublisher);
+        verifyNoInteractions(vaccinationRepository, vaccinationEventPublisher);
     }
 
     @Test
     void testUpdateVaccination_Success() {
         Long vaccinationId = 1L;
-        Vaccination updatedDetails = new Vaccination();
-        updatedDetails.setVaccineName("Distemper");
-        updatedDetails.setVaccinationDate(LocalDate.now().plusMonths(1));
-        updatedDetails.setNextDueDate(LocalDate.now().plusMonths(12));
+        VaccinationRequestDTO updatedDetails = new VaccinationRequestDTO("Distemper", LocalDate.now().plusMonths(1), LocalDate.now().plusMonths(12));
+        responseDTO.setVaccineName("Distemper");
 
         when(vaccinationRepository.findById(vaccinationId)).thenReturn(Optional.of(vaccination));
-        when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
+        when(vaccinationRepository.save(any(Vaccination.class))).thenReturn(vaccination);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
-        Vaccination updatedVaccination = vaccinationService.updateVaccination(vaccinationId, updatedDetails);
+        VaccinationResponseDTO updatedVaccination = vaccinationService.updateVaccination(vaccinationId, updatedDetails);
 
         assertEquals("Distemper", updatedVaccination.getVaccineName());
         verify(vaccinationRepository).save(any(Vaccination.class));
-
-        verifyNoMoreInteractions(vaccinationEventPublisher);
+        verifyNoInteractions(vaccinationEventPublisher);
     }
 
     @Test
     void testUpdateVaccination_OverdueReminder() {
         Long vaccinationId = 1L;
-        Vaccination updatedDetails = new Vaccination();
-        updatedDetails.setVaccineName("Distemper");
-        updatedDetails.setVaccinationDate(LocalDate.now().minusMonths(1));
-        updatedDetails.setNextDueDate(LocalDate.now().minusDays(1));
+        VaccinationRequestDTO updatedDetails = new VaccinationRequestDTO("Distemper", LocalDate.now().minusMonths(1), LocalDate.now().minusDays(1));
+
+        vaccination.setNextDueDate(LocalDate.now().minusDays(1));
 
         when(vaccinationRepository.findById(vaccinationId)).thenReturn(Optional.of(vaccination));
-        when(vaccinationRepository.save(vaccination)).thenReturn(vaccination);
+        when(vaccinationRepository.save(any(Vaccination.class))).thenReturn(vaccination);
+        when(vaccinationMapper.toDTO(any(Vaccination.class))).thenReturn(responseDTO);
 
         vaccinationService.updateVaccination(vaccinationId, updatedDetails);
 

@@ -26,7 +26,7 @@ public class PetInteraction {
 	private LocalDateTime interactionDate;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "pet_id")
+	@JoinColumn(name = "pet_id", nullable = false)
 	@ToString.Exclude
 	private Pet pet;
 

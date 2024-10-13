@@ -1,6 +1,6 @@
 package com.wolfhack.vetoptim.petmanagement.service;
 
-import com.wolfhack.vetoptim.common.dto.PetHealthSummary;
+import com.wolfhack.vetoptim.common.dto.pet.PetHealthSummary;
 import com.wolfhack.vetoptim.petmanagement.model.MedicalRecord;
 import com.wolfhack.vetoptim.petmanagement.repository.MedicalRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
