@@ -26,7 +26,7 @@ class TaskStatusListenerTest {
     void handleTaskCompleted_SurgeryTask() {
         TaskCompletedEvent event = new TaskCompletedEvent(1L, 1L, "Surgery", "Surgery on left leg", TaskStatus.COMPLETED);
 
-        taskStatusListener.handleTaskCompleted(event);
+        taskStatusListener.handleTaskCompleted(event, "key", "topic");
 
         verify(medicalRecordService, times(1)).createMedicalRecordFromAppointment(1L, "Surgery Completed", "Surgery on left leg");
     }
@@ -35,7 +35,7 @@ class TaskStatusListenerTest {
     void handleTaskCompleted_NonSurgeryTask() {
         TaskCompletedEvent event = new TaskCompletedEvent(1L, 1L, "Checkup", "General checkup", TaskStatus.COMPLETED);
 
-        taskStatusListener.handleTaskCompleted(event);
+        taskStatusListener.handleTaskCompleted(event, "key", "topic");
 
         verify(medicalRecordService, never()).createMedicalRecordFromAppointment(anyLong(), anyString(), anyString());
     }

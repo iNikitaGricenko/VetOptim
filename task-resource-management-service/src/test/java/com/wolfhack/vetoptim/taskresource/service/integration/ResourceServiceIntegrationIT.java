@@ -1,6 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
+import com.wolfhack.vetoptim.taskresource.config.DockerComposeTestConfiguration;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import com.wolfhack.vetoptim.taskresource.service.IResourceService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
+@Import(DockerComposeTestConfiguration.class)
 class ResourceServiceIntegrationIT {
 
     @Autowired
@@ -76,14 +79,15 @@ class ResourceServiceIntegrationIT {
         resource.setQuantity(10);
         resource = resourceRepository.save(resource);
 
-        mockMvc.perform(put("/api/resources/{id}", 1L)
+        String jsonContent = String.format("{ \"id\": %d, \"name\": \"Surgical Kit\", \"type\": \"EQUIPMENT\", \"quantity\": 15 }", resource.getId());
+        mockMvc.perform(put("/api/resources/{id}", resource.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{ \"name\": \"Surgical Kit\", \"type\": \"EQUIPMENT\", \"quantity\": 15 }"))
+                .content(jsonContent))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Surgical Kit"))
             .andExpect(jsonPath("$.quantity").value(15));
 
-        Optional<Resource> updatedResource = resourceRepository.findById(1L);
+        Optional<Resource> updatedResource = resourceRepository.findById(resource.getId());
         assertTrue(updatedResource.isPresent());
         assertEquals(15, updatedResource.get().getQuantity());
     }

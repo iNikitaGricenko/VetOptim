@@ -1,0 +1,172 @@
+Video Consultation Service Implementation Plan
+Responsibilities:
+
+    Video Calls Between Clients and Veterinarians:
+        Handle video consultations using WebRTC for real-time communication between clients and veterinarians.
+        Provide necessary endpoints to initiate, join, and terminate video calls.
+
+    Appointment Integration:
+        Sync with the Appointment Service to allow scheduling and automatic initiation of video consultations based on appointments.
+
+    Consultation Recording:
+        Provide an option to record video consultations for future reference or for the pet owner's review.
+        Allow veterinarians to access and store these recordings for medical records.
+
+    Security and Authentication:
+        Ensure that only authorized users (veterinarians and pet owners) can join the consultations.
+        Implement secure access control for video streams and recordings.
+
+    Notification and Alerts:
+        Notify users via the Notification Service (if integrated) when a consultation is about to start, or when a recording is available for review.
+
+Communication:
+
+    Appointment Service:
+        Why: The Video Consultation Service needs to synchronize with the Appointment Service to automatically set up video calls based on scheduled virtual appointments.
+        What: Fetch appointment details and initiate video consultations at the time of the scheduled appointment.
+
+    Pet Management Service:
+        Why: The Pet Management Service stores medical records and pet profiles, which may need to be referenced during the video consultation.
+        What: Provide pet medical records and history for consultation reference.
+
+    Task & Resource Management Service:
+        Why: The video consultation may generate tasks for veterinarians or require specific resources (like a follow-up task).
+        What: Send tasks or follow-up procedures after video consultations.
+
+    Notification Service:
+        Why: Notify pet owners and veterinarians when video calls are about to start or when a consultation recording is available.
+        What: Send notifications about upcoming consultations or availability of recordings.
+
+Database:
+
+    VideoConsultation:
+        Fields: consultationId, appointmentId, vetId, petId, ownerId, startTime, endTime, recordingUrl, etc.
+        Purpose: To store details of video consultations and associated metadata.
+
+    Recording Management:
+        Fields: recordingId, consultationId, url, storageLocation, etc.
+        Purpose: Manage recordings of video consultations.
+
+Step-by-Step Implementation Plan:
+
+    Maven Setup:
+        Set up a Maven project with necessary dependencies, such as Spring Boot, WebRTC libraries, and security/authentication tools.
+
+    Database Schema:
+        Create tables to store consultation records, manage consultation links, and track recordings.
+
+    Video API:
+        Endpoints to initiate, join, and terminate video consultations.
+        Implement security and authentication for access to the video streams.
+
+    Appointment Synchronization:
+        Fetch virtual appointments from the Appointment Service and automatically schedule video calls.
+
+    Consultation Recording:
+        Add functionality to record video calls and store recordings securely.
+
+    Notifications and Alerts:
+        Integrate with the Notification Service to alert users about upcoming consultations and recording availability.
+
+    Testing:
+        Ensure integration with other microservices.
+        Functional tests for video calls, recording, and synchronization.
+
+Tech Stack for the Video Consultation Service:
+1. Backend Framework: Spring Boot (Java)
+
+    Why:
+        Spring Boot provides rapid development with features like dependency injection, web services, REST APIs, and security, which will be crucial for managing video sessions, handling WebRTC integration, and security.
+        It's compatible with other services in the system, ensuring uniformity and ease of integration with microservices.
+    Features: Use Spring Security for authentication and authorization, and WebSocket support for real-time video communication.
+
+2. Video Streaming and Real-Time Communication: WebRTC
+
+    Why:
+        WebRTC is a popular standard for real-time communication, allowing direct peer-to-peer video calls.
+        It supports low-latency video/audio transmission and works well for telemedicine scenarios like this one.
+    Usage:
+        WebRTC will handle video calls, peer-to-peer communication between clients (veterinarians and pet owners).
+        Use a TURN/STUN server (such as Coturn hosted on AWS) for connection establishment and NAT traversal.
+
+3. Database: MongoDB (NoSQL)
+
+    Why:
+        MongoDB’s document-oriented nature makes it ideal for storing dynamic and structured data like video consultation metadata (e.g., recording URLs, timestamps).
+        It allows easy integration for storing JSON-like data and efficiently handles potentially large consultation records with fast read/write performance.
+    Features:
+        Use it to store metadata for consultations (start/end times, participants) and recordings.
+
+4. Storage for Video Recordings: AWS S3 (Amazon Simple Storage Service)
+
+    Why:
+        AWS S3 is a highly scalable and secure object storage service, ideal for storing large media files like video recordings.
+        It provides global distribution, redundancy, and secure access with S3 pre-signed URLs for accessing video files.
+    Features:
+        Store video recordings from the consultations.
+        Pre-signed URLs for temporary access to recordings by pet owners and veterinarians.
+
+5. Authentication and Authorization: AWS Cognito or Spring Security with OAuth 2.0
+
+    Why:
+        AWS Cognito can handle user authentication and authorization for pet owners and veterinarians, integrating well with AWS services.
+        If you prefer keeping everything inside Spring, you can use Spring Security with OAuth 2.0 to manage session-based authentication and user roles.
+    Features:
+        Role-based access control (veterinarian vs. pet owner) for joining video calls and accessing recordings.
+
+6. Task Management/Message Queue: AWS SQS or RabbitMQ
+
+    Why:
+        For handling asynchronous tasks like notifications, event-driven architecture (initiating calls, updating appointment status), and task retries, AWS SQS or RabbitMQ (already in use in the ecosystem) would be suitable.
+    Features:
+        Use SQS or RabbitMQ to trigger notifications (before or after the video consultation) and ensure reliable message delivery for appointment synchronization.
+
+7. Notifications: AWS SNS (Simple Notification Service) or RabbitMQ
+
+    Why:
+        AWS SNS can handle notifications across multiple services, allowing push notifications for upcoming consultations, recording availability, and event-driven alerts.
+    Features:
+        Use it to send SMS, email, or mobile push notifications for reminders and updates related to video consultations.
+
+8. Video Processing: AWS MediaConvert
+
+    Why:
+        For video recording transcoding or post-processing (e.g., converting video formats, reducing video size for storage), AWS MediaConvert provides an on-demand, scalable solution.
+    Features:
+        This service can be invoked after a consultation to process and optimize recordings before storing them in S3.
+
+9. Real-Time Notifications/Signaling: WebSocket or Socket.IO (via Spring Boot WebSockets)
+
+    Why:
+        WebRTC requires signaling (exchange of connection information) between participants to establish peer-to-peer connections.
+        Spring Boot WebSocket or Socket.IO can handle this real-time exchange of data, facilitating seamless video consultations.
+    Features:
+        Use WebSockets for signaling (e.g., joining or leaving a session, starting a video call).
+
+10. Infrastructure: Kubernetes (K8s) with AWS EKS
+
+    Why:
+        Kubernetes provides orchestration for containerized services, making it easy to scale the Video Consultation Service horizontally as demand grows.
+        Use AWS EKS (Elastic Kubernetes Service) for simplified deployment, scaling, and management of microservices.
+    Features:
+        Automate the deployment, scaling, and management of containerized microservices for high availability and fault tolerance.
+
+11. Logging and Monitoring: AWS CloudWatch or ELK Stack
+
+    Why:
+        AWS CloudWatch offers deep integration with AWS services and can track logs, monitor services, and set up alarms based on key metrics (e.g., call duration, recording issues).
+        Alternatively, ELK Stack (Elasticsearch, Logstash, and Kibana) can provide powerful real-time monitoring and log aggregation across your services.
+    Features:
+        Track performance metrics, service errors, and video quality monitoring.
+
+Tech Stack Summary:
+
+    Backend: Spring Boot (Java), WebRTC, Spring WebSockets
+    Database: MongoDB (NoSQL)
+    Storage: AWS S3 (for video recordings)
+    Authentication: Spring Security with OAuth 2.0
+    Queueing/Asynchronous Tasks: RabbitMQ
+    Notifications: RabbitMQ
+    Video Processing: AWS MediaConvert (for transcoding and processing)
+    Container Orchestration: Kubernetes (AWS EKS)
+    Logging & Monitoring: AWS CloudWatch or ELK Stack

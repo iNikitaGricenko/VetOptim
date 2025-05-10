@@ -23,7 +23,7 @@ class ResourceListenerTest {
     void handleResourceDepletion_success() {
         ResourceDepletedEvent event = new ResourceDepletedEvent("Vaccine", 10);
 
-        resourceListener.handleResourceDepletion(event);
+        resourceListener.handleResourceDepletion(event, "key", "topic");
 
         verify(notificationService).notifyOfResourceDepletion("Vaccine", 10);
     }
@@ -32,7 +32,7 @@ class ResourceListenerTest {
     void handleResourceDepletion_logsCorrectInformation() {
         ResourceDepletedEvent event = new ResourceDepletedEvent("Medicine", 5);
 
-        resourceListener.handleResourceDepletion(event);
+        resourceListener.handleResourceDepletion(event, "key", "topic");
 
         verify(notificationService).notifyOfResourceDepletion("Medicine", 5);
     }

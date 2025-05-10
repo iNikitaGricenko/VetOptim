@@ -23,7 +23,7 @@ public class OwnerEventListenerTest {
     void handleOwnerCreatedEvent_success() {
         OwnerCreatedEvent ownerCreatedEvent = new OwnerCreatedEvent(1L, "John Doe", "example@mail.com");
 
-        ownerEventListener.handleOwnerCreatedEvent(ownerCreatedEvent);
+        ownerEventListener.handleOwnerCreatedEvent(ownerCreatedEvent, "key", "topic");
 
         verify(petService).updateOwnerInfoForPets(1L, "John Doe");
     }
@@ -32,7 +32,7 @@ public class OwnerEventListenerTest {
     void handleOwnerCreatedEvent_logsCorrectInformation() {
         OwnerCreatedEvent ownerCreatedEvent = new OwnerCreatedEvent(1L, "John Doe", "example@mail.com");
 
-        ownerEventListener.handleOwnerCreatedEvent(ownerCreatedEvent);
+        ownerEventListener.handleOwnerCreatedEvent(ownerCreatedEvent, "key", "topic");
 
         verify(petService).updateOwnerInfoForPets(1L, "John Doe");
     }

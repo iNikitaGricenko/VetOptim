@@ -8,6 +8,7 @@ import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import com.wolfhack.vetoptim.common.event.task.TaskCreatedEvent;
 import com.wolfhack.vetoptim.taskresource.client.BillingClient;
 import com.wolfhack.vetoptim.taskresource.client.PetClient;
+import com.wolfhack.vetoptim.taskresource.config.DockerComposeTestConfiguration;
 import com.wolfhack.vetoptim.taskresource.event.TaskEventPublisher;
 import com.wolfhack.vetoptim.taskresource.model.Staff;
 import com.wolfhack.vetoptim.taskresource.model.Task;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
+@Import(DockerComposeTestConfiguration.class)
 class TaskServiceIT {
 
     @Autowired

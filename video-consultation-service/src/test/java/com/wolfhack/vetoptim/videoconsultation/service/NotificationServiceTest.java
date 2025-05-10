@@ -7,25 +7,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @InjectMocks
     private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(notificationService, "notificationExchange", "notification-exchange");
-        ReflectionTestUtils.setField(notificationService, "videoNotificationRoutingKey", "video.notification");
+        ReflectionTestUtils.setField(notificationService, "videoNotificationTopic", "notification-video");
+
+        // Default mock for successful scenarios
+        when(kafkaTemplate.send(anyString(), anyString(), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(null));
     }
 
     @Test
@@ -35,10 +41,11 @@ class NotificationServiceTest {
         String sessionId = "12345";
         NotificationType type = NotificationType.SESSION_START;
         String message = "Video session started for vetId: 1 and ownerId: 2. Session ID: 12345";
+        String key = "session-12345";
 
         notificationService.sendNotification(vetId, ownerId, sessionId, type, null);
 
-        verify(rabbitTemplate, times(1)).convertAndSend("notification-exchange", "video.notification", message);
+        verify(kafkaTemplate, times(1)).send("notification-video", key, message);
     }
 
     @Test
@@ -47,15 +54,19 @@ class NotificationServiceTest {
         Long ownerId = 2L;
         String sessionId = "12345";
         NotificationType type = NotificationType.SESSION_START;
+        String key = "session-12345";
 
-        doThrow(new AmqpException("RabbitMQ error"))
-            .when(rabbitTemplate).convertAndSend(anyString(), anyString(), anyString());
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        future.completeExceptionally(new ExecutionException("Kafka error", new RuntimeException()));
+        when(kafkaTemplate.send(eq("notification-video"), eq(key), anyString()))
+            .thenReturn((CompletableFuture) future);
 
         try {
             notificationService.sendNotification(vetId, ownerId, sessionId, type, null);
-        } catch (AmqpException e) {
+        } catch (RuntimeException e) {
+            // Expected exception
         }
 
-        verify(rabbitTemplate, times(1)).convertAndSend(anyString(), anyString(), anyString());
+        verify(kafkaTemplate, times(1)).send(anyString(), anyString(), anyString());
     }
 }

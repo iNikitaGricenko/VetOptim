@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.KafkaHeaders;
 
 import static org.mockito.Mockito.*;
 
@@ -24,8 +25,10 @@ class TaskCompletionListenerTest {
     @Test
     void handleTaskCompletion_Success_CompletedStatus() {
         TaskCompletedEvent taskCompletedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Completed", TaskStatus.COMPLETED);
+        String topic = "task-completed";
+        String key = "task-1";
 
-        taskCompletionListener.handleTaskCompletion(taskCompletedEvent);
+        taskCompletionListener.handleTaskCompletion(taskCompletedEvent, topic, key);
 
         verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.COMPLETED);
     }
@@ -33,8 +36,10 @@ class TaskCompletionListenerTest {
     @Test
     void handleTaskCompletion_Success_FailedStatus() {
         TaskCompletedEvent taskFailedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Failed", TaskStatus.FAILED);
+        String topic = "task-completed";
+        String key = "task-1";
 
-        taskCompletionListener.handleTaskCompletion(taskFailedEvent);
+        taskCompletionListener.handleTaskCompletion(taskFailedEvent, topic, key);
 
         verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.CANCELED);
     }
@@ -42,8 +47,10 @@ class TaskCompletionListenerTest {
     @Test
     void handleTaskCompletion_Success_EscalatedStatus() {
         TaskCompletedEvent taskEscalatedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Escalated", TaskStatus.ESCALATED);
+        String topic = "task-completed";
+        String key = "task-1";
 
-        taskCompletionListener.handleTaskCompletion(taskEscalatedEvent);
+        taskCompletionListener.handleTaskCompletion(taskEscalatedEvent, topic, key);
 
         verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.ESCALATED);
     }
@@ -51,9 +58,11 @@ class TaskCompletionListenerTest {
     @Test
     void handleTaskCompletion_ExceptionHandling() {
         TaskCompletedEvent taskCompletedEvent = new TaskCompletedEvent(1L, 100L, "Surgery", "Task Completed", TaskStatus.COMPLETED);
+        String topic = "task-completed";
+        String key = "task-1";
         doThrow(new RuntimeException("Appointment not found")).when(appointmentService).updateAppointmentStatus(anyLong(), any());
 
-        taskCompletionListener.handleTaskCompletion(taskCompletedEvent);
+        taskCompletionListener.handleTaskCompletion(taskCompletedEvent, topic, key);
 
         verify(appointmentService, times(1)).updateAppointmentStatus(1L, AppointmentStatus.COMPLETED);
     }

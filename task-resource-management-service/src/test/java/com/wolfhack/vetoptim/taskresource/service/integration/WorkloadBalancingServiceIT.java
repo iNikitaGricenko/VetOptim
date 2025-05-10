@@ -2,6 +2,7 @@ package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.TaskType;
+import com.wolfhack.vetoptim.taskresource.config.DockerComposeTestConfiguration;
 import com.wolfhack.vetoptim.taskresource.model.Staff;
 import com.wolfhack.vetoptim.taskresource.model.Task;
 import com.wolfhack.vetoptim.taskresource.repository.StaffRepository;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
+@Import(DockerComposeTestConfiguration.class)
 class WorkloadBalancingServiceIT {
 
     @Autowired

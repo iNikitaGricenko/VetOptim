@@ -3,46 +3,51 @@ package com.wolfhack.vetoptim.videoconsultation.service;
 import com.wolfhack.vetoptim.videoconsultation.model.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Value("${rabbitmq.exchange.notification}")
-    private String notificationExchange;
-
-    @Value("${rabbitmq.routingKey.notification.video}")
-    private String videoNotificationRoutingKey;
+    @Value("${kafka.topic.notification.video}")
+    private String videoNotificationTopic;
 
     @Retryable(
-        retryFor = {AmqpException.class},
+        retryFor = {ExecutionException.class, TimeoutException.class, InterruptedException.class},
         backoff = @Backoff(delay = 2000)
     )
     public void sendNotification(Long vetId, Long ownerId, String sessionId, NotificationType type, String additionalMessage) {
         String message = buildNotificationMessage(vetId, ownerId, sessionId, type, additionalMessage);
         log.info("Sending {} notification: {}", type, message);
+        String key = "session-" + sessionId;
 
         try {
-            rabbitTemplate.convertAndSend(notificationExchange, videoNotificationRoutingKey, message);
+            kafkaTemplate.send(videoNotificationTopic, key, message).get(10, TimeUnit.SECONDS);
             log.info("Notification for {} sent successfully.", type);
-        } catch (AmqpException e) {
-            log.error("Failed to send {} notification. Retrying... Error: {}", type, e.getMessage());
-            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while sending {} notification for session ID: {}", type, sessionId, e);
+            throw new RuntimeException("Message sending interrupted", e);
+        } catch (ExecutionException | TimeoutException e) {
+            log.error("Failed to send {} notification for session ID: {}. Error: {}", type, sessionId, e.getMessage());
+            throw new RuntimeException("Failed to send message", e);
         }
     }
 
     @Recover
-    public void recover(AmqpException e, Long vetId, Long ownerId, String sessionId, NotificationType type, String additionalMessage) {
+    public void recover(RuntimeException e, Long vetId, Long ownerId, String sessionId, NotificationType type, String additionalMessage) {
         log.error("All retries failed for sending {} notification for session ID: {}. Error: {}", type, sessionId, e.getMessage());
     }
 

@@ -6,7 +6,10 @@ import com.wolfhack.vetoptim.common.TaskStatus;
 import com.wolfhack.vetoptim.common.event.task.TaskCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +21,15 @@ public class TaskCompletionListener {
     private final AppointmentService appointmentService;
 
     @Async
-    @RabbitListener(queues = "${rabbitmq.queue.task.completed}")
-    public void handleTaskCompletion(TaskCompletedEvent event) {
+    @KafkaListener(
+        topics = "${kafka.topic.task.completed}",
+        groupId = "${kafka.consumer.group.task}",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handleTaskCompletion(
+            @Payload TaskCompletedEvent event,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_KEY) String key) {
         log.info("Received task completion event for Task ID: {}", event.getTaskId());
 
         try {

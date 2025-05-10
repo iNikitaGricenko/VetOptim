@@ -1,6 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.service.integration;
 
 import com.wolfhack.vetoptim.common.ResourceType;
+import com.wolfhack.vetoptim.taskresource.config.DockerComposeTestConfiguration;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import com.wolfhack.vetoptim.taskresource.service.ResourceForecastingService;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
+@Import(DockerComposeTestConfiguration.class)
 class ResourceForecastingServiceIT {
 
     @Autowired

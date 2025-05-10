@@ -1,6 +1,7 @@
 package com.wolfhack.vetoptim.taskresource.controller.integration;
 
 import com.wolfhack.vetoptim.common.ResourceType;
+import com.wolfhack.vetoptim.taskresource.config.DockerComposeTestConfiguration;
 import com.wolfhack.vetoptim.taskresource.model.Resource;
 import com.wolfhack.vetoptim.taskresource.repository.ResourceRepository;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ExtendWith(MockitoExtension.class)
+@Import(DockerComposeTestConfiguration.class)
 class ResourceControllerIT {
 
     @Autowired

@@ -7,12 +7,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,16 +26,19 @@ class ReminderServiceTest {
     private AppointmentService appointmentService;
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @InjectMocks
     private ReminderService reminderService;
 
     @BeforeEach
     void setUp() {
-        reminderService = new ReminderService(appointmentService, rabbitTemplate);
-        ReflectionTestUtils.setField(reminderService, "notificationExchange", "notification-exchange");
-        ReflectionTestUtils.setField(reminderService, "reminderRoutingKey", "reminder-routing-key");
+        reminderService = new ReminderService(appointmentService, kafkaTemplate);
+        ReflectionTestUtils.setField(reminderService, "reminderTopic", "reminder-topic");
+
+        // Mock the CompletableFuture returned by kafkaTemplate.send()
+        CompletableFuture<SendResult<String, String>> future = CompletableFuture.completedFuture(null);
+        when(kafkaTemplate.send(anyString(), anyString(), anyString())).thenReturn(future);
     }
 
     @Test
@@ -40,8 +47,10 @@ class ReminderServiceTest {
         LocalDateTime reminderThreshold = now.plusDays(1);
 
         AppointmentDTO appointmentDTO = new AppointmentDTO();
-        appointmentDTO.setPetId(1L);
-        appointmentDTO.setVeterinarianName("Vet");
+        appointmentDTO.setId(1L);
+        appointmentDTO.setPetId(2L);
+        appointmentDTO.setPetName("Buddy");
+        appointmentDTO.setVeterinarianName("Dr. Smith");
         appointmentDTO.setAppointmentDate(reminderThreshold);
 
         when(appointmentService.getAppointmentsForDateRange(any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -50,7 +59,7 @@ class ReminderServiceTest {
         reminderService.sendAppointmentReminders();
 
         verify(appointmentService).getAppointmentsForDateRange(any(LocalDateTime.class), any(LocalDateTime.class));
-        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), anyString());
+        verify(kafkaTemplate).send(anyString(), anyString(), anyString());
     }
 
 

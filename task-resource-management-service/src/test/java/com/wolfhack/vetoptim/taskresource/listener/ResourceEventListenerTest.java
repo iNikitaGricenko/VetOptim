@@ -24,7 +24,7 @@ class ResourceEventListenerTest {
     void handleResourceDepleted_Success() {
         ResourceDepletedEvent event = new ResourceDepletedEvent("Surgical Kit", 2);
 
-        resourceEventListener.handleResourceDepleted(event);
+        resourceEventListener.handleResourceDepleted(event, "topic", 1, "key");
 
         verify(notificationService, times(1)).notifyOfResourceDepletion(event.getResourceName(), event.getRemainingQuantity());
     }

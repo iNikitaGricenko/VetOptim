@@ -9,49 +9,63 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.concurrent.CompletableFuture;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PetEventPublisherTest {
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks
-    private PetEventPublisher IPetEventPublisher;
+    private PetEventPublisher petEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(IPetEventPublisher, "petExchange", "pet-exchange");
+        ReflectionTestUtils.setField(petEventPublisher, "petCreatedTopic", "pet-created");
+        ReflectionTestUtils.setField(petEventPublisher, "petUpdatedTopic", "pet-updated");
+        ReflectionTestUtils.setField(petEventPublisher, "petDeletedTopic", "pet-deleted");
+
+        // Mock the CompletableFuture returned by kafkaTemplate.send()
+        when(kafkaTemplate.send(anyString(), anyString(), any()))
+                .thenReturn(CompletableFuture.completedFuture(null));
     }
 
     @Test
     void testPublishPetCreatedEvent() {
         PetCreatedEvent event = new PetCreatedEvent(1L, "Buddy", "Dog", "Bulldog", 1L);
+        String key = "pet-" + event.getPetId();
 
-        IPetEventPublisher.publishPetCreatedEvent(event);
+        petEventPublisher.publishPetCreatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.created", event);
+        verify(kafkaTemplate).send("pet-created", key, event);
     }
 
     @Test
     void testPublishPetUpdatedEvent() {
         PetUpdatedEvent event = new PetUpdatedEvent(1L, "Buddy", "Dog", "Bulldog", 1L);
+        String key = "pet-" + event.getPetId();
 
-        IPetEventPublisher.publishPetUpdatedEvent(event);
+        petEventPublisher.publishPetUpdatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.updated", event);
+        verify(kafkaTemplate).send("pet-updated", key, event);
     }
 
     @Test
     void testPublishPetDeletedEvent() {
         PetDeletedEvent event = new PetDeletedEvent(1L);
+        String key = "pet-" + event.getPetId();
 
-        IPetEventPublisher.publishPetDeletedEvent(event);
+        petEventPublisher.publishPetDeletedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("pet-exchange", "pet.deleted", event);
+        verify(kafkaTemplate).send("pet-deleted", key, event);
     }
 }

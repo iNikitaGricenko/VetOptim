@@ -10,64 +10,96 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.concurrent.CompletableFuture;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TaskEventPublisherTest {
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @InjectMocks
     private TaskEventPublisher taskEventPublisher;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(taskEventPublisher, "taskExchange", "task-exchange");
-        ReflectionTestUtils.setField(taskEventPublisher, "taskCreatedRoutingKey", "task.created");
-        ReflectionTestUtils.setField(taskEventPublisher, "taskCompletedRoutingKey", "task.completed");
-        ReflectionTestUtils.setField(taskEventPublisher, "resourceDepletedRoutingKey", "resource.depleted");
+        ReflectionTestUtils.setField(taskEventPublisher, "taskCreatedTopic", "task-created");
+        ReflectionTestUtils.setField(taskEventPublisher, "taskCompletedTopic", "task-completed");
+        ReflectionTestUtils.setField(taskEventPublisher, "resourceDepletedTopic", "resource-depleted");
+
+        // Mock the CompletableFuture returned by kafkaTemplate.send()
+        lenient().when(kafkaTemplate.send(anyString(), anyString(), any()))
+                .thenReturn(CompletableFuture.completedFuture(null));
     }
 
     @Test
     void publishTaskCreatedEvent_Success() {
         TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Surgery scheduled");
+        String key = "task-" + event.getTaskId();
 
         taskEventPublisher.publishTaskCreatedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("task-exchange", "task.created", event);
+        verify(kafkaTemplate).send("task-created", key, event);
     }
 
     @Test
     void publishTaskCompletedEvent_Success() {
         TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "Surgery", "Surgery completed", TaskStatus.COMPLETED);
+        String key = "task-" + event.getTaskId();
 
         taskEventPublisher.publishTaskCompletedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("task-exchange", "task.completed", event);
+        verify(kafkaTemplate).send("task-completed", key, event);
     }
 
     @Test
     void publishResourceDepletedEvent_Success() {
         ResourceDepletedEvent event = new ResourceDepletedEvent("Surgical Kit", 2);
+        String key = "resource-" + event.getResourceName();
 
         taskEventPublisher.publishResourceDepletedEvent(event);
 
-        verify(rabbitTemplate).convertAndSend("task-exchange", "resource.depleted", event);
+        verify(kafkaTemplate).send("resource-depleted", key, event);
     }
 
     @Test
-    void testRecover() {
-        AmqpException exception = new AmqpException("Failed to send event");
+    void testRecoverTaskCreated() {
+        RuntimeException exception = new RuntimeException("Failed to send event");
         TaskCreatedEvent event = new TaskCreatedEvent(1L, 101L, "Surgery", "Surgery scheduled");
 
         taskEventPublisher.recover(exception, event);
 
-        verifyNoMoreInteractions(rabbitTemplate);
+        verifyNoMoreInteractions(kafkaTemplate);
+    }
+
+    @Test
+    void testRecoverTaskCompleted() {
+        RuntimeException exception = new RuntimeException("Failed to send event");
+        TaskCompletedEvent event = new TaskCompletedEvent(1L, 101L, "Surgery", "Surgery completed", TaskStatus.COMPLETED);
+
+        taskEventPublisher.recover(exception, event);
+
+        verifyNoMoreInteractions(kafkaTemplate);
+    }
+
+    @Test
+    void testRecoverResourceDepleted() {
+        RuntimeException exception = new RuntimeException("Failed to send event");
+        ResourceDepletedEvent event = new ResourceDepletedEvent("Surgical Kit", 2);
+
+        taskEventPublisher.recover(exception, event);
+
+        verifyNoMoreInteractions(kafkaTemplate);
     }
 }

@@ -5,7 +5,8 @@ import com.wolfhack.vetoptim.petmanagement.service.IMedicalRecordService;
 import com.wolfhack.vetoptim.petmanagement.service.IPetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +19,12 @@ public class AppointmentEventListener {
     private final IMedicalRecordService IMedicalRecordService;
 
     @Async
-    @RabbitListener(queues = "${rabbitmq.queue.appointment.created}")
-    public void onAppointmentCreated(AppointmentDTO appointmentDTO) {
+    @KafkaListener(
+        topics = "${kafka.topic.appointment.created}",
+        groupId = "${kafka.consumer.group.appointment}",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void onAppointmentCreated(@Payload AppointmentDTO appointmentDTO) {
         log.info("Processing appointment created event for Pet ID: {}", appointmentDTO.getPetId());
         IPetService.handleAppointmentCreated(appointmentDTO);
 
@@ -36,8 +41,12 @@ public class AppointmentEventListener {
     }
 
     @Async
-    @RabbitListener(queues = "${rabbitmq.queue.appointment.updated}")
-    public void onAppointmentUpdated(AppointmentDTO appointmentDTO) {
+    @KafkaListener(
+        topics = "${kafka.topic.appointment.updated}",
+        groupId = "${kafka.consumer.group.appointment}",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void onAppointmentUpdated(@Payload AppointmentDTO appointmentDTO) {
         log.info("Processing appointment update event for Pet ID: {}", appointmentDTO.getPetId());
         IPetService.handleAppointmentUpdated(appointmentDTO);
 
